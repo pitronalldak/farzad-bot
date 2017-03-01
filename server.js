@@ -8,6 +8,7 @@ require("./messages/bot_app/models");
 const port = process.env.PORT || 3000;
 
 const action = require('./messages/bot_app/actions');
+const PASSWORD = 'password';
 
 module.exports = app;
 
@@ -41,11 +42,15 @@ var token = '330486268:AAEEi7yURFX0EZQRE7EhylamB1-WaJi5ljg';
 
 var bot = new TelegramBot(token, {polling: true});
 
-bot.onText(/test/, function (msg, match) {
+bot.onText(/info/, function (msg, match) {
     var chatId = msg.chat.id;
 
-    // send back the matched "whatever" to the chat
-    bot.sendMessage(chatId, 'test compited');
+    const text = 'Hi. Farzad bot can help you with your interview.\n \n' +
+        '-start- Started your interview \n \n' +
+        '-add_question: password|question{answer/answer/answer}- Created new question for your interview.\n \n' +
+        '-remove password- Remove all questions from interview.\n \n' +
+        '-info- Get commands list.';
+    bot.sendMessage(chatId, text);
 });
 
 bot.on('callback_query', callbackQuery => {
@@ -53,6 +58,7 @@ bot.on('callback_query', callbackQuery => {
     const message = callbackQuery.message;
 
     const callback_data = callbackQuery.data.split('|');
+
     const question = callback_data[0];
     const answer = callback_data[1];
 
@@ -69,30 +75,25 @@ bot.on('callback_query', callbackQuery => {
                                     inline_keyboard: [[]]
                                 }
                             };
-
-                            let question;
+                            let responseQuestion;
                             let isNext = false;
 
                             for (let item of user.answers) {
-                                if (!item.answer) {
-                                    question = questions.find(q => q.question == item.question);
-                                }
-                            }
-
-                            for (let item of user.answers) {
-                                if (!item.answer && item.question !== question.question) {
-                                    isNext =true;
+                                if (!item.answer  && item.question !== question) {
+                                    responseQuestion = questions.find(q => q.question == item.question);
+                                    isNext = true;
+                                    break
                                 }
                             }
 
                             if (isNext) {
-                                question.answers.forEach(answer => {
+                                responseQuestion.answers.forEach(answer => {
                                     opts.reply_markup.inline_keyboard[0].push({
                                         text: answer,
-                                        callback_data: `${question.question}|${answer}`
+                                        callback_data: `${responseQuestion.question}|${answer}`
                                     })
                                 });
-                                bot.sendMessage(chatId, question.question, opts);
+                                bot.sendMessage(chatId, responseQuestion.question, opts);
                             } else {
                                 bot.sendMessage(chatId, 'Thank!');
                             }
@@ -105,11 +106,42 @@ bot.on('callback_query', callbackQuery => {
 
 // Create interview
 
-bot.onText(/Add question: (.+)/, function (msg, match) {
+bot.onText(/add_question: (.+)/, function (msg, match) {
+    const data = match[1];
+    const password = data.split('|')[0];
+    const question = data.split('|')[1];
     const chatId = msg.chat.id;
-    action.createQuestion(match[1]).then(() => bot.sendMessage(chatId, `Question added!`));
+    if (password === PASSWORD) {
+        action.createQuestion(question).then(() => bot.sendMessage(chatId, `Question added!`));
+    } else {
+        bot.sendMessage(chatId, `Wrong password!`)
+    }
+
 });
 
+// Remove all questions
+
+bot.onText(/remove (.+)/, function (msg, match) {
+    const password = match[1];
+    const chatId = msg.chat.id;
+    if (password === PASSWORD) {
+        action.removeQuestions().then(() => bot.sendMessage(chatId, `Question list is empty!`));
+    } else {
+        bot.sendMessage(chatId, `Wrong password!`)
+    }
+});
+
+//  Question with text answer
+
+// bot.onText(/answer/, function (msg, match) {
+//     const chatId = msg.chat.id;
+//     bot.sendMessage(chatId, `answer?`)
+//         .then(ans => {
+//             bot.once('message', (msg) => {
+//                 console.log(msg.text);
+//             })
+//         })
+// });
 
 bot.onText(/start/, function (msg, match) {
     action.createUser(msg)

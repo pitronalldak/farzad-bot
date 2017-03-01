@@ -25,14 +25,14 @@ const UserSchema = new Schema({
     }]
 });
 
-QuestionSchema.statics = {
+QuestionSchema.methods = {
+    remove: function () {
+        return this.remove()
+            .exec();
+    }
+};
 
-    /**
-     * List questions
-     *
-     * @param {Object} options
-     * @api private
-     */
+QuestionSchema.statics = {
 
     list: function (options) {
         return this.find()

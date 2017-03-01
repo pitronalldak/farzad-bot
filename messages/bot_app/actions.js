@@ -15,8 +15,12 @@ exports.createQuestion = async(function* (text) {
 
     let preData = text.split('{');
     data.question = preData[0];
-    preData = preData[1].split('}');
-    preData = preData[0].split('/');
+    if (preData[1]) {
+        preData = preData[1].split('}');
+        preData = preData[0].split('/');
+    } else {
+        yield
+    }
 
     data.answers = [];
     preData.forEach(a => data.answers.push(a));
@@ -35,12 +39,11 @@ exports.createQuestion = async(function* (text) {
 
 exports.getQuestions = async(function* () {
     return Question.list();
-    // try {
-    //     yield Question.list();
-    // } catch (err) {
-    //     const errors = Object.keys(err.errors)
-    //         .map(field => err.errors[field].message);
-    // }
+});
+
+
+exports.removeQuestions = async(function* () {
+    return Question.remove();
 });
 
 exports.getUser = async(function* (telegramId) {
