@@ -63,56 +63,72 @@ bot.on('callback_query', callbackQuery => {
 
     const question = callback_data[0];
     const answer = callback_data[1];
+    const chatId = message.chat.id;
 
     action.getQuestions()
         .then((questions) => {
-            action.putAnswer(telegramId, question, answer)
-                .then(() => {
-                    action.getUser(telegramId)
-                        .then((user) => {
+            if (answer === 'Own answer') {
+                const opts = {
+                    reply_markup: {
+                        force_reply: true,
 
-                            const chatId = message.chat.id;
-                            const opts = {
-                                reply_markup: {
-                                    inline_keyboard: []
+                    }
+                };
+                bot.sendMessage(chatId, question, opts)
+            } else {
+                action.putAnswer(telegramId, question, answer)
+                    .then(() => {
+                        action.getUser(telegramId)
+                            .then((user) => {
+
+                                const chatId = message.chat.id;
+                                const opts = {
+                                    reply_markup: {
+                                        inline_keyboard: []
+                                    }
+                                };
+                                let responseQuestion;
+                                let isNext = false;
+
+                                for (let item of user.answers) {
+                                    if (!item.answer && item.question !== question) {
+                                        responseQuestion = questions.find(q => q.question == item.question);
+                                        isNext = true;
+                                        break
+                                    }
                                 }
-                            };
-                            let responseQuestion;
-                            let isNext = false;
 
-                            for (let item of user.answers) {
-                                if (!item.answer  && item.question !== question) {
-                                    responseQuestion = questions.find(q => q.question == item.question);
-                                    isNext = true;
-                                    break
-                                }
-                            }
-
-                            if (isNext) {
-                                if (responseQuestion.answers.length) {
-                                    responseQuestion.answers.forEach(answer => {
+                                if (isNext) {
+                                    if (responseQuestion.answers.length) {
+                                        responseQuestion.answers.forEach(answer => {
+                                            opts.reply_markup.inline_keyboard.push([{
+                                                text: answer,
+                                                callback_data: `${responseQuestion.question}|${answer}`,
+                                                resize_keyboard: true
+                                            }])
+                                        });
                                         opts.reply_markup.inline_keyboard.push([{
-                                            text: answer,
-                                            callback_data: `${responseQuestion.question}|${answer}`,
+                                            text: 'Own answer.',
+                                            callback_data: `${responseQuestion.question}|Own answer`,
                                             resize_keyboard: true
-                                        }])
-                                    });
-                                    bot.sendMessage(chatId, responseQuestion.question, opts);
-                                }
-                                else {
-                                    const opts = {
-                                        reply_markup: {
-                                            force_reply: true,
+                                        }]);
+                                        bot.sendMessage(chatId, responseQuestion.question, opts);
+                                    }
+                                    else {
+                                        const opts = {
+                                            reply_markup: {
+                                                force_reply: true,
 
-                                        }
-                                    };
-                                    bot.sendMessage(chatId, responseQuestion.question, opts)
+                                            }
+                                        };
+                                        bot.sendMessage(chatId, responseQuestion.question, opts)
+                                    }
+                                } else {
+                                    bot.sendMessage(chatId, 'Thank!');
                                 }
-                            } else {
-                                bot.sendMessage(chatId, 'Thank!');
-                            }
-                        })
-                })
+                            })
+                    })
+            }
         })
 });
 
@@ -148,7 +164,7 @@ bot.onText(/remove (.+)/, function (msg, match) {
 
 bot.on('message', msg => {
     if (msg.reply_to_message) {
-        console.log(msg)
+
         const telegramId = msg.reply_to_message.chat.id;
         const question = msg.reply_to_message.text;
         const answer = msg.text;
@@ -186,6 +202,10 @@ bot.on('message', msg => {
                                                 resize_keyboard: true
                                             }])
                                         });
+                                        opts.reply_markup.inline_keyboard.push([{
+                                            text: 'Own answer',
+                                            callback_data: `${responseQuestion.question}|Own answer`
+                                        }]);
                                         bot.sendMessage(chatId, responseQuestion.question, opts);
                                     }
                                     else {
@@ -224,6 +244,10 @@ bot.onText(/start/, function (msg, match) {
                                 callback_data: `${questions[0].question}|${answer}`
                             }])
                         });
+                        opts.reply_markup.inline_keyboard.push([{
+                            text: 'Own answer',
+                            callback_data: `${questions[0].question}|Own answer`
+                        }]);
                         bot.sendMessage(chatId, questions[0].question, opts);
                     } else {
                         const opts = {
