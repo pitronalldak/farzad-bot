@@ -19,7 +19,7 @@ exports.createQuestion = async(function* (text) {
         preData = preData[1].split('}');
         preData = preData[0].split('/');
     } else {
-        yield
+        preData = [];
     }
 
     data.answers = [];
@@ -69,6 +69,7 @@ exports.createUser = async(function* (data) {
 
                         return user.save();
                     } else {
+                        questions.forEach(q => userData.answers.push({question: q.question}));
                         const newUser = new User(userData);
 
                         return newUser.save();
