@@ -12,12 +12,11 @@ const User = mongoose.model('User');
 
 exports.createQuestion = async(function* (text) {
     const data = {};
-
     let preData = text.split('{');
     data.question = preData[0];
+
     if (preData[1]) {
-        preData = preData[1].split('}');
-        preData = preData[0].split('/');
+        preData = preData[1].split('}')[0].split('/');
     } else {
         preData = [];
     }

@@ -48,7 +48,7 @@ bot.onText(/info/, function (msg, match) {
         '-add_question: password|question{answer/answer/answer}- Created new question for your interview.\n \n' +
         '-add_question: password|question- Created new question for your interview without variants.\n \n' +
         '-remove password- Remove all questions from interview.\n \n' +
-        '-info- Get commands list.';
+        '-info- Get commands list.\n \n' +
         '-google password- Download database to google doc.';
     bot.sendMessage(chatId, text);
 });
@@ -135,9 +135,9 @@ bot.on('callback_query', callbackQuery => {
 // Create interview
 
 bot.onText(/add_question: (.+)/, function (msg, match) {
-    const data = match[1];
-    const password = data.split('|')[0];
-    const question = data.split('|')[1];
+    const data = match[1].split('|');
+    const password = data[0];
+    const question = data[1];
     const chatId = msg.chat.id;
     if (password === PASSWORD) {
         action.createQuestion(question).then(() => bot.sendMessage(chatId, `Question added!`));
@@ -243,12 +243,12 @@ bot.onText(/google (.+)/, function (msg, match) {
                     }
                     jusers.push(juser);
                 }
-                console.log(jusers);
             });
     } else {
         bot.sendMessage(chatId, `Wrong password!`)
     }
 });
+
 
 bot.onText(/start/, function (msg, match) {
     action.createUser(msg)
@@ -272,8 +272,6 @@ bot.onText(/start/, function (msg, match) {
                             text: 'Own answer',
                             callback_data: `${questions[0].question}|Own answer`
                         }]);
-                        console.log(opts.reply_markup.inline_keyboard);
-                        console.log(questions[0].question);
                         bot.sendMessage(chatId, questions[0].question, opts);
                     } else {
                         const opts = {
