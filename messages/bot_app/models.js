@@ -1,14 +1,6 @@
 const mongoose = require('mongoose');
-const uuidV1 = require('uuid/v1');
-
-// const Imager = require('imager');
-// const config = require('../../config');
-// const imagerConfig = require(config.root + '/config/imager.js');
 
 const Schema = mongoose.Schema;
-
-const getTags = tags => tags.join(',');
-const setTags = tags => tags.split(',');
 
 const QuestionSchema = new Schema({
     question: { type : String, default : ''},
@@ -52,6 +44,10 @@ UserSchema.statics = {
     getUserById: function (telegramId) {
         return this.findOne({telegramId})
             .exec();
+    },
+    list: function (options) {
+        return this.find()
+        .exec();
     }
 };
 

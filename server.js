@@ -1,6 +1,5 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const join = require('path').join;
 const app = express();
 
 require("./messages/bot_app/models");
@@ -32,8 +31,6 @@ function listen () {
 }
 
 
-
-
 var TelegramBot = require('node-telegram-bot-api');
 
 // replace the value below with the Telegram token you receive from @BotFather
@@ -52,6 +49,7 @@ bot.onText(/info/, function (msg, match) {
         '-add_question: password|question- Created new question for your interview without variants.\n \n' +
         '-remove password- Remove all questions from interview.\n \n' +
         '-info- Get commands list.';
+        '-google password- Download database to google doc.';
     bot.sendMessage(chatId, text);
 });
 
@@ -226,6 +224,32 @@ bot.on('message', msg => {
     }
 });
 
+//object for google docs
+
+bot.onText(/google (.+)/, function (msg, match) {
+    const password = match[1];
+    const chatId = msg.chat.id;
+    if (password === PASSWORD) {
+        action.getUsers()
+            .then((users) => {
+                let jusers = [];
+                for (let user of users) {
+                    let juser = {};
+                    juser.telegramId = user.telegramId;
+                    juser.date = user.date;
+                    let answers = user.answers;
+                    for (let answer of answers) {
+                        juser[answer.question] = answer.answer;
+                    }
+                    jusers.push(juser);
+                }
+                console.log(jusers);
+            });
+    } else {
+        bot.sendMessage(chatId, `Wrong password!`)
+    }
+});
+
 bot.onText(/start/, function (msg, match) {
     action.createUser(msg)
         .then(() =>
@@ -242,12 +266,14 @@ bot.onText(/start/, function (msg, match) {
                             opts.reply_markup.inline_keyboard.push([{
                                 text: answer,
                                 callback_data: `${questions[0].question}|${answer}`
-                            }])
+                            }]);
                         });
                         opts.reply_markup.inline_keyboard.push([{
                             text: 'Own answer',
                             callback_data: `${questions[0].question}|Own answer`
                         }]);
+                        console.log(opts.reply_markup.inline_keyboard);
+                        console.log(questions[0].question);
                         bot.sendMessage(chatId, questions[0].question, opts);
                     } else {
                         const opts = {
@@ -261,4 +287,3 @@ bot.onText(/start/, function (msg, match) {
                 })
         )
 });
-

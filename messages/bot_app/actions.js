@@ -21,10 +21,8 @@ exports.createQuestion = async(function* (text) {
     } else {
         preData = [];
     }
-
     data.answers = [];
     preData.forEach(a => data.answers.push(a));
-
     const question = new Question(data);
 
     try {
@@ -41,6 +39,9 @@ exports.getQuestions = async(function* () {
     return Question.list();
 });
 
+exports.getUsers = async(function* () {
+    return User.list();
+});
 
 exports.removeQuestions = async(function* () {
     return Question.remove();
