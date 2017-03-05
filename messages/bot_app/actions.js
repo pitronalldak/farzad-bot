@@ -20,6 +20,7 @@ exports.createQuestion = async(function* (text) {
     } else {
         preData = [];
     }
+    data.id = Math.random();
     data.answers = [];
     preData.forEach((a, key) => data.answers.push({id: key, text: a}));
     const question = new Question(data);
