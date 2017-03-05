@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="402dba12-3b8f-437f-a6dc-beea5a2497ac" name="Default" comment="Fixed problem with questions">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gitignore" afterPath="$PROJECT_DIR$/.gitignore" />
+    <list default="true" id="402dba12-3b8f-437f-a6dc-beea5a2497ac" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/server.js" afterPath="$PROJECT_DIR$/server.js" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -307,7 +305,7 @@
       <workItem from="1488620023654" duration="30583000" />
       <workItem from="1488655911363" duration="2399000" />
       <workItem from="1488714873809" duration="629000" />
-      <workItem from="1488727906677" duration="39000" />
+      <workItem from="1488727906677" duration="59000" />
     </task>
     <task id="LOCAL-00001" summary="Added downloading data in spreadsheets">
       <created>1488468968671</created>
@@ -323,11 +321,18 @@
       <option name="project" value="LOCAL" />
       <updated>1488662606590</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Delete dot from own answer...">
+      <created>1488727962536</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1488727962536</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="95887000" />
+    <option name="totallyTimeSpent" value="95907000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="23" width="1440" height="825" extended-state="0" />
@@ -391,7 +396,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Added downloading data in spreadsheets" />
     <MESSAGE value="Fixed problem with questions" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fixed problem with questions" />
+    <MESSAGE value="Delete dot from own answer..." />
+    <option name="LAST_COMMIT_MESSAGE" value="Delete dot from own answer..." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
