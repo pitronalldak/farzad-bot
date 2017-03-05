@@ -2,5 +2,5 @@
 typings/
 node_modules/
 *.js.map
-.idea
+/.idea
 npm-debug.log

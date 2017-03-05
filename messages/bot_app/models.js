@@ -5,7 +5,7 @@ var ObjectIdSchema = Schema.ObjectId;
 var ObjectId = mongoose.Types.ObjectId;
 
 const QuestionSchema = new Schema({
-    id: {type: String, default: Math.random()},
+    id: {type: String, default: ''},
     question: { type : String, default : ''},
     answers: { type : [] }}
 );

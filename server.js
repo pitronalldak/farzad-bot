@@ -64,8 +64,6 @@ bot.on('callback_query', callbackQuery => {
         .then(questions => {
 
             const question = questions.find(q => q.id == questionId).question;
-            const answer = questions.find(q => q.id == questionId).answers
-                .find(a => a.id == answerId).text;
 
             if (answerId === 'Own answer') {
                 const opts = {
@@ -77,6 +75,8 @@ bot.on('callback_query', callbackQuery => {
 
                 bot.sendMessage(chatId, question, opts)
             } else {
+                const answer = questions.find(q => q.id == questionId).answers
+                    .find(a => a.id == answerId).text;
                 action.putAnswer(telegramId, question, answer)
                     .then(() => {
                         action.getUser(telegramId)
@@ -98,7 +98,6 @@ bot.on('callback_query', callbackQuery => {
                                         break
                                     }
                                 }
-
                                 if (isNext) {
                                     if (responseQuestion.answers.length) {
                                         responseQuestion.answers.forEach(answer => {
@@ -164,60 +163,73 @@ bot.on('message', msg => {
         const telegramId = msg.reply_to_message.chat.id;
         const question = msg.reply_to_message.text;
         const answer = msg.text;
+        const chatId = msg.chat.id;
 
         action.getQuestions()
             .then((questions) => {
-                action.putAnswer(telegramId, question, answer)
-                    .then(() => {
-                        action.getUser(telegramId)
-                            .then((user) => {
 
-                                const chatId = msg.chat.id;
-                                const opts = {
-                                    reply_markup: {
-                                        inline_keyboard: []
+                if (answer === 'Own answer') {
+                    const opts = {
+                        reply_markup: {
+                            force_reply: true,
+
+                        }
+                    };
+
+                    bot.sendMessage(chatId, question, opts)
+                } else {
+                    action.putAnswer(telegramId, question, answer)
+                        .then(() => {
+                            action.getUser(telegramId)
+                                .then((user) => {
+
+                                    const chatId = msg.chat.id;
+                                    const opts = {
+                                        reply_markup: {
+                                            inline_keyboard: []
+                                        }
+                                    };
+                                    let responseQuestion;
+                                    let isNext = false;
+
+                                    for (let item of user.answers) {
+                                        if (!item.answer && item.question !== question) {
+                                            responseQuestion = questions.find(q => q.question == item.question);
+                                            isNext = true;
+                                            break
+                                        }
                                     }
-                                };
-                                let responseQuestion;
-                                let isNext = false;
 
-                                for (let item of user.answers) {
-                                    if (!item.answer && item.question !== question) {
-                                        responseQuestion = questions.find(q => q.question == item.question);
-                                        isNext = true;
-                                        break
-                                    }
-                                }
-
-                                if (isNext) {
-                                    if (responseQuestion.answers.length) {
-                                        responseQuestion.answers.forEach(answer => {
+                                    if (isNext) {
+                                        if (responseQuestion.answers.length) {
+                                            responseQuestion.answers.forEach(answer => {
+                                                opts.reply_markup.inline_keyboard.push([{
+                                                    text: answer.text,
+                                                    callback_data: `${responseQuestion.id}|${answer.id}`,
+                                                    resize_keyboard: true
+                                                }])
+                                            });
                                             opts.reply_markup.inline_keyboard.push([{
-                                                text: answer,
-                                                callback_data: `${responseQuestion._id}|${answer.id}`,
-                                                resize_keyboard: true
-                                            }])
-                                        });
-                                        opts.reply_markup.inline_keyboard.push([{
-                                            text: 'Own answer',
-                                            callback_data: `${responseQuestion._id}|Own answer`
-                                        }]);
-                                        bot.sendMessage(chatId, responseQuestion.question, opts);
-                                    }
-                                    else {
-                                        const opts = {
-                                            reply_markup: {
-                                                force_reply: true,
+                                                text: 'Own answer',
+                                                callback_data: `${responseQuestion.id}|Own answer`
+                                            }]);
+                                            bot.sendMessage(chatId, responseQuestion.question, opts);
+                                        }
+                                        else {
+                                            const opts = {
+                                                reply_markup: {
+                                                    force_reply: true,
 
-                                            }
-                                        };
-                                        bot.sendMessage(chatId, responseQuestion.question, opts)
+                                                }
+                                            };
+                                            bot.sendMessage(chatId, responseQuestion.question, opts)
+                                        }
+                                    } else {
+                                        bot.sendMessage(chatId, 'Thank!');
                                     }
-                                } else {
-                                    bot.sendMessage(chatId, 'Thank!');
-                                }
-                            })
-                    })
+                                })
+                        })
+                }
             })
     }
 });
