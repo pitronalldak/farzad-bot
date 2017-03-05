@@ -54,7 +54,6 @@ bot.onText(/info/, function (msg, match) {
 bot.on('callback_query', callbackQuery => {
     const telegramId = callbackQuery.from.id;
     const message = callbackQuery.message;
-
     const callback_data = callbackQuery.data.split('|');
 
     const questionId = callback_data[0];
@@ -104,14 +103,14 @@ bot.on('callback_query', callbackQuery => {
                                     if (responseQuestion.answers.length) {
                                         responseQuestion.answers.forEach(answer => {
                                             opts.reply_markup.inline_keyboard.push([{
-                                                text: answer,
-                                                callback_data: `${responseQuestion._id}|${answer.id}`,
+                                                text: answer.text,
+                                                callback_data: `${responseQuestion.id}|${answer.id}`,
                                                 resize_keyboard: true
                                             }])
                                         });
                                         opts.reply_markup.inline_keyboard.push([{
                                             text: 'Own answer.',
-                                            callback_data: `${responseQuestion._id}|Own answer`,
+                                            callback_data: `${responseQuestion.id}|Own answer`,
                                             resize_keyboard: true
                                         }]);
                                         bot.sendMessage(chatId, responseQuestion.question, opts);
