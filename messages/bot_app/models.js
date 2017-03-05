@@ -1,8 +1,11 @@
 const mongoose = require('mongoose');
 
 const Schema = mongoose.Schema;
+var ObjectIdSchema = Schema.ObjectId;
+var ObjectId = mongoose.Types.ObjectId;
 
 const QuestionSchema = new Schema({
+    id: {type: String, default: Math.random()},
     question: { type : String, default : ''},
     answers: { type : [] }}
 );
@@ -12,7 +15,9 @@ const UserSchema = new Schema({
     username: {type: String, default: ''},
     telegramId: {type: String, default: ''},
     answers: [{
+        answerId: {type: String, default: ''},
         question: {type: String, default: ''},
+        questionId: {type: String, default: ''},
         answer: {type: String, default: ''}
     }]
 });
