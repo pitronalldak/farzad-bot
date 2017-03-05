@@ -108,7 +108,7 @@ bot.on('callback_query', callbackQuery => {
                                             }])
                                         });
                                         opts.reply_markup.inline_keyboard.push([{
-                                            text: 'Own answer.',
+                                            text: 'Own answer',
                                             callback_data: `${responseQuestion.id}|Own answer`,
                                             resize_keyboard: true
                                         }]);
