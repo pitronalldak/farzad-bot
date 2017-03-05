@@ -21,7 +21,7 @@ exports.createQuestion = async(function* (text) {
         preData = [];
     }
     data.answers = [];
-    preData.forEach(a => data.answers.push(a));
+    preData.forEach((a, key) => data.answers.push({id: key, text: a}));
     const question = new Question(data);
 
     try {
@@ -65,11 +65,11 @@ exports.createUser = async(function* (data) {
                     if (user) {
                         user.answers = [];
                         user.date = moment().format('MMMM Do YYYY, h:mm:ss a');
-                        questions.forEach(q => user.answers.push({question: q.question}));
+                        questions.forEach(q => user.answers.push({question: q.question, questionId: q._id}));
 
                         return user.save();
                     } else {
-                        questions.forEach(q => userData.answers.push({question: q.question}));
+                        questions.forEach(q => userData.answers.push({question: q.question, questionId: q._id}));
                         const newUser = new User(userData);
 
                         return newUser.save();

@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const app = express();
+const {postSpreadSheets} = require('./messages/bot_app/google-spreadsheets');
 
 require("./messages/bot_app/models");
 
@@ -11,12 +12,10 @@ const action = require('./messages/bot_app/actions');
 const PASSWORD = 'Survey2017';
 
 module.exports = app;
-
 connect()
     .on('error', console.log)
     .on('disconnected', connect)
     .once('open', listen);
-
 
 function connect () {
     const options = { server: { socketOptions: { keepAlive: 1 } } };
@@ -30,18 +29,17 @@ function listen () {
     console.log('Express app started on port ' + port);
 }
 
-
-var TelegramBot = require('node-telegram-bot-api');
+const TelegramBot = require('node-telegram-bot-api');
 
 // replace the value below with the Telegram token you receive from @BotFather
-var token = '330486268:AAEEi7yURFX0EZQRE7EhylamB1-WaJi5ljg';
+const token = '330486268:AAEEi7yURFX0EZQRE7EhylamB1-WaJi5ljg';
 
 // Create a bot that uses 'polling' to fetch new updates
 
-var bot = new TelegramBot(token, {polling: true});
+const bot = new TelegramBot(token, {polling: true});
 
 bot.onText(/info/, function (msg, match) {
-    var chatId = msg.chat.id;
+    const chatId = msg.chat.id;
 
     const text = 'Hi. Farzad bot can help you with your interview.\n \n' +
         '-start- Started your interview \n \n' +
@@ -59,19 +57,25 @@ bot.on('callback_query', callbackQuery => {
 
     const callback_data = callbackQuery.data.split('|');
 
-    const question = callback_data[0];
-    const answer = callback_data[1];
+    const questionId = callback_data[0];
+    const answerId = callback_data[1];
     const chatId = message.chat.id;
 
     action.getQuestions()
-        .then((questions) => {
-            if (answer === 'Own answer') {
+        .then(questions => {
+
+            const question = questions.find(q => q.id == questionId).question;
+            const answer = questions.find(q => q.id == questionId).answers
+                .find(a => a.id == answerId).text;
+
+            if (answerId === 'Own answer') {
                 const opts = {
                     reply_markup: {
                         force_reply: true,
 
                     }
                 };
+
                 bot.sendMessage(chatId, question, opts)
             } else {
                 action.putAnswer(telegramId, question, answer)
@@ -101,13 +105,13 @@ bot.on('callback_query', callbackQuery => {
                                         responseQuestion.answers.forEach(answer => {
                                             opts.reply_markup.inline_keyboard.push([{
                                                 text: answer,
-                                                callback_data: `${responseQuestion.question}|${answer}`,
+                                                callback_data: `${responseQuestion._id}|${answer.id}`,
                                                 resize_keyboard: true
                                             }])
                                         });
                                         opts.reply_markup.inline_keyboard.push([{
                                             text: 'Own answer.',
-                                            callback_data: `${responseQuestion.question}|Own answer`,
+                                            callback_data: `${responseQuestion._id}|Own answer`,
                                             resize_keyboard: true
                                         }]);
                                         bot.sendMessage(chatId, responseQuestion.question, opts);
@@ -131,9 +135,7 @@ bot.on('callback_query', callbackQuery => {
 });
 
 
-
 // Create interview
-
 bot.onText(/add_question: (.+)/, function (msg, match) {
     const data = match[1].split('|');
     const password = data[0];
@@ -144,11 +146,9 @@ bot.onText(/add_question: (.+)/, function (msg, match) {
     } else {
         bot.sendMessage(chatId, `Wrong password!`)
     }
-
 });
 
 // Remove all questions
-
 bot.onText(/remove (.+)/, function (msg, match) {
     const password = match[1];
     const chatId = msg.chat.id;
@@ -158,7 +158,6 @@ bot.onText(/remove (.+)/, function (msg, match) {
         bot.sendMessage(chatId, `Wrong password!`)
     }
 });
-
 
 bot.on('message', msg => {
     if (msg.reply_to_message) {
@@ -196,13 +195,13 @@ bot.on('message', msg => {
                                         responseQuestion.answers.forEach(answer => {
                                             opts.reply_markup.inline_keyboard.push([{
                                                 text: answer,
-                                                callback_data: `${responseQuestion.question}|${answer}`,
+                                                callback_data: `${responseQuestion._id}|${answer.id}`,
                                                 resize_keyboard: true
                                             }])
                                         });
                                         opts.reply_markup.inline_keyboard.push([{
                                             text: 'Own answer',
-                                            callback_data: `${responseQuestion.question}|Own answer`
+                                            callback_data: `${responseQuestion._id}|Own answer`
                                         }]);
                                         bot.sendMessage(chatId, responseQuestion.question, opts);
                                     }
@@ -225,30 +224,39 @@ bot.on('message', msg => {
 });
 
 //object for google docs
-
 bot.onText(/google (.+)/, function (msg, match) {
     const password = match[1];
     const chatId = msg.chat.id;
     if (password === PASSWORD) {
         action.getUsers()
             .then((users) => {
-                let jusers = [];
+                let userList = [];
+                let columns = [];
+                let answerList = [];
                 for (let user of users) {
-                    let juser = {};
-                    juser.telegramId = user.telegramId;
-                    juser.date = user.date;
+                    let juser = [];
+                    juser.push(user.telegramId);
+                    juser.push(user.date);
                     let answers = user.answers;
-                    for (let answer of answers) {
-                        juser[answer.question] = answer.answer;
+                    if (!answerList.length) {
+                        answerList = user.answers;
                     }
-                    jusers.push(juser);
+                    for (let answer of answers) {
+                        juser.push(answer.answer);
+                    }
+                    userList.push(juser);
                 }
+
+                columns.push('telegramId', 'date');
+                for (let a of answerList) {
+                    columns.push(a.question);
+                }
+                postSpreadSheets(userList, columns);
             });
     } else {
         bot.sendMessage(chatId, `Wrong password!`)
     }
 });
-
 
 bot.onText(/start/, function (msg, match) {
     action.createUser(msg)
@@ -256,22 +264,30 @@ bot.onText(/start/, function (msg, match) {
             action.getQuestions()
                 .then((questions) => {
                     const chatId = msg.chat.id;
-                    const opts = {
-                        reply_markup: {
-                            inline_keyboard: []
-                        }
+
+                    const reply_markup = {
+                        inline_keyboard: []
                     };
+
                     if (questions[0].answers.length) {
                         questions[0].answers.forEach(answer => {
-                            opts.reply_markup.inline_keyboard.push([{
-                                text: answer,
-                                callback_data: `${questions[0].question}|${answer}`
+                            reply_markup.inline_keyboard.push([{
+                                text: answer.text,
+                                callback_data: `${questions[0].id}|${answer.id}`,
+                                resize_keyboard: true
                             }]);
                         });
-                        opts.reply_markup.inline_keyboard.push([{
+                        reply_markup.inline_keyboard.push([{
                             text: 'Own answer',
-                            callback_data: `${questions[0].question}|Own answer`
+                            callback_data: `${questions[0].id}|Own answer`,
+                            resize_keyboard: true
                         }]);
+
+                        const opts = {
+                            "parse_mode": "Markdown",
+                            "reply_markup": JSON.stringify(reply_markup)
+                        };
+
                         bot.sendMessage(chatId, questions[0].question, opts);
                     } else {
                         const opts = {
