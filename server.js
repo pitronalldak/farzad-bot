@@ -5,7 +5,7 @@ const {postSpreadSheets} = require('./messages/bot_app/google-spreadsheets');
 
 require("./messages/bot_app/models");
 
-const port = process.env.PORT || 3003;
+const port = process.env.PORT || 3000;
 
 const action = require('./messages/bot_app/actions');
 
@@ -32,7 +32,7 @@ function listen () {
 const TelegramBot = require('node-telegram-bot-api');
 
 // replace the value below with the Telegram token you receive from @BotFather
-const token = '330486268:AAEEi7yURFX0EZQRE7EhylamB1-WaJi5ljg';
+const token = '350720484:AAEgITsnyA0ZIFgQ46ivEq7Sp2VTrt4YDUg';
 
 // Create a bot that uses 'polling' to fetch new updates
 
@@ -41,11 +41,10 @@ const bot = new TelegramBot(token, {polling: true});
 bot.onText(/info/, function (msg, match) {
     const chatId = msg.chat.id;
 
-    const text = 'Hi. Farzad bot can help you with your interview.\n \n' +
-        '-start- Started your interview \n \n' +
-        '-add_question: password|question{answer/answer/answer}- Created new question for your interview.\n \n' +
-        '-add_question: password|question- Created new question for your interview without variants.\n \n' +
-        '-add_question: password|question{answer/answer/answer}|own custom variant- Created new question for your interview without variants.\n \n' +
+    const text = '-start- Started your interview \n \n' +
+        '-add_question: password|question{answer/answer/answer}- Create new question with options.\n \n' +
+        '-add_question: password|question- Create new question without input answer.\n \n' +
+        '-add_question: password|question{answer/answer/answer}|own custom variant- Create new question with options and input answer.\n \n' +
         '-remove password- Remove all questions from interview.\n \n' +
         '-info- Get commands list.\n \n' +
         '-google password- Download database to google doc.';
@@ -74,7 +73,6 @@ bot.on('callback_query', callbackQuery => {
 
                     }
                 };
-
                 bot.sendMessage(chatId, question, opts)
             } else {
                 const answer = questions.find(q => q.id == questionId).answers
@@ -128,14 +126,13 @@ bot.on('callback_query', callbackQuery => {
                                         bot.sendMessage(chatId, responseQuestion.question, opts)
                                     }
                                 } else {
-                                    bot.sendMessage(chatId, 'Thank!');
+                                    bot.sendMessage(chatId, 'Thank you!');
                                 }
                             })
                     })
             }
         })
 });
-
 
 // Create interview
 bot.onText(/add_question: (.+)/, function (msg, match) {
@@ -220,7 +217,7 @@ bot.on('message', msg => {
                                     bot.sendMessage(chatId, responseQuestion.question, opts)
                                 }
                             } else {
-                                bot.sendMessage(chatId, 'Thank!');
+                                bot.sendMessage(chatId, 'Thank you!');
                             }
                         })
                 })
@@ -257,6 +254,7 @@ bot.onText(/google (.+)/, function (msg, match) {
                     columns.push(a.question);
                 }
                 postSpreadSheets(userList, columns);
+                bot.sendMessage(chatId, `Migration complete!`)
             });
     } else {
         bot.sendMessage(chatId, `Wrong password!`)

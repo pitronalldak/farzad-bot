@@ -120,8 +120,8 @@ const listMajors = (userList, columns) => (
         sheets.spreadsheets.values.update({
             valueInputOption: 'USER_ENTERED',
             auth: auth,
-            spreadsheetId: '1eJ4aPBTK23gsrmx9Y06apyMZgLp6uQahBra7PlylMEE',
-            range: `A1:${toLetters(columns.length + 4)}${userList.length + 1}`,
+            spreadsheetId: '1LOUGqVKIm-crpOjIgTPUY7QlY6ubaSyclRZjqsGUx2U',
+            range: `A1:${toLetters(columns.length + 50)}${userList.length + 1}`,
             resource: {values}
         }, function (err, response) {
             if (err) {
