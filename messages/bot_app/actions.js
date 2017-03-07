@@ -10,7 +10,7 @@ const Question = mongoose.model('Question');
 const User = mongoose.model('User');
 
 
-exports.createQuestion = async(function* (text) {
+exports.createQuestion = async(function* (text, ownAnswer) {
     const data = {};
     let preData = text.split('{');
     data.question = preData[0];
@@ -22,7 +22,9 @@ exports.createQuestion = async(function* (text) {
     }
     data.id = Math.random();
     data.answers = [];
-    preData.forEach((a, key) => data.answers.push({id: key, text: a}));
+
+    if (ownAnswer) data.ownAnswer = {text: ownAnswer, id: 0};
+    preData.forEach((a, key) => data.answers.push({id: key + 1, text: a}));
     const question = new Question(data);
 
     try {

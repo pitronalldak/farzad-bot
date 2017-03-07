@@ -5,7 +5,7 @@ const {postSpreadSheets} = require('./messages/bot_app/google-spreadsheets');
 
 require("./messages/bot_app/models");
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3003;
 
 const action = require('./messages/bot_app/actions');
 
@@ -45,6 +45,7 @@ bot.onText(/info/, function (msg, match) {
         '-start- Started your interview \n \n' +
         '-add_question: password|question{answer/answer/answer}- Created new question for your interview.\n \n' +
         '-add_question: password|question- Created new question for your interview without variants.\n \n' +
+        '-add_question: password|question{answer/answer/answer}|own custom variant- Created new question for your interview without variants.\n \n' +
         '-remove password- Remove all questions from interview.\n \n' +
         '-info- Get commands list.\n \n' +
         '-google password- Download database to google doc.';
@@ -58,6 +59,7 @@ bot.on('callback_query', callbackQuery => {
 
     const questionId = callback_data[0];
     const answerId = callback_data[1];
+    const isOwnAnswer = !!callback_data[2];
     const chatId = message.chat.id;
 
     action.getQuestions()
@@ -65,7 +67,7 @@ bot.on('callback_query', callbackQuery => {
 
             const question = questions.find(q => q.id == questionId).question;
 
-            if (answerId === 'Own answer') {
+            if (isOwnAnswer) {
                 const opts = {
                     reply_markup: {
                         force_reply: true,
@@ -107,11 +109,13 @@ bot.on('callback_query', callbackQuery => {
                                                 resize_keyboard: true
                                             }])
                                         });
-                                        opts.reply_markup.inline_keyboard.push([{
-                                            text: 'Own answer',
-                                            callback_data: `${responseQuestion.id}|Own answer`,
-                                            resize_keyboard: true
-                                        }]);
+                                        if (responseQuestion.ownAnswer.text) {
+                                            opts.reply_markup.inline_keyboard.push([{
+                                                text: responseQuestion.ownAnswer.text,
+                                                callback_data: `${responseQuestion.id}|${responseQuestion.ownAnswer.id}|true`,
+                                                resize_keyboard: true
+                                            }]);
+                                        }
                                         bot.sendMessage(chatId, responseQuestion.question, opts);
                                     }
                                     else {
@@ -138,9 +142,10 @@ bot.onText(/add_question: (.+)/, function (msg, match) {
     const data = match[1].split('|');
     const password = data[0];
     const question = data[1];
+    const ownAnswer = data[2];
     const chatId = msg.chat.id;
     if (password === PASSWORD) {
-        action.createQuestion(question).then(() => bot.sendMessage(chatId, `Question added!`));
+        action.createQuestion(question, ownAnswer).then(() => bot.sendMessage(chatId, `Question added!`));
     } else {
         bot.sendMessage(chatId, `Wrong password!`)
     }
@@ -167,69 +172,58 @@ bot.on('message', msg => {
 
         action.getQuestions()
             .then((questions) => {
+             action.putAnswer(telegramId, question, answer)
+                 .then(() => {
+                    action.getUser(telegramId)
+                        .then((user) => {
 
-                if (answer === 'Own answer') {
-                    const opts = {
-                        reply_markup: {
-                            force_reply: true,
+                            const chatId = msg.chat.id;
+                            const opts = {
+                                reply_markup: {
+                                    inline_keyboard: []
+                                }
+                            };
+                            let responseQuestion;
+                            let isNext = false;
+                            for (let item of user.answers) {
+                                if (!item.answer && item.question !== question) {
+                                    responseQuestion = questions.find(q => q.question == item.question);
+                                    isNext = true;
+                                    break
+                                }
+                            }
 
-                        }
-                    };
-
-                    bot.sendMessage(chatId, question, opts)
-                } else {
-                    action.putAnswer(telegramId, question, answer)
-                        .then(() => {
-                            action.getUser(telegramId)
-                                .then((user) => {
-
-                                    const chatId = msg.chat.id;
+                            if (isNext) {
+                                if (responseQuestion.answers.length) {
+                                    responseQuestion.answers.forEach(answer => {
+                                        opts.reply_markup.inline_keyboard.push([{
+                                            text: answer.text,
+                                            callback_data: `${responseQuestion.id}|${answer.id}`,
+                                            resize_keyboard: true
+                                        }])
+                                    });
+                                    if (responseQuestion.ownAnswer.text) {
+                                        opts.reply_markup.inline_keyboard.push([{
+                                            text: responseQuestion.ownAnswer.text,
+                                            callback_data: `${responseQuestion.id}|${responseQuestion.ownAnswer.id}|true`
+                                        }]);
+                                    }
+                                    bot.sendMessage(chatId, responseQuestion.question, opts);
+                                }
+                                else {
                                     const opts = {
                                         reply_markup: {
-                                            inline_keyboard: []
+                                            force_reply: true,
+
                                         }
                                     };
-                                    let responseQuestion;
-                                    let isNext = false;
-
-                                    for (let item of user.answers) {
-                                        if (!item.answer && item.question !== question) {
-                                            responseQuestion = questions.find(q => q.question == item.question);
-                                            isNext = true;
-                                            break
-                                        }
-                                    }
-
-                                    if (isNext) {
-                                        if (responseQuestion.answers.length) {
-                                            responseQuestion.answers.forEach(answer => {
-                                                opts.reply_markup.inline_keyboard.push([{
-                                                    text: answer.text,
-                                                    callback_data: `${responseQuestion.id}|${answer.id}`,
-                                                    resize_keyboard: true
-                                                }])
-                                            });
-                                            opts.reply_markup.inline_keyboard.push([{
-                                                text: 'Own answer',
-                                                callback_data: `${responseQuestion.id}|Own answer`
-                                            }]);
-                                            bot.sendMessage(chatId, responseQuestion.question, opts);
-                                        }
-                                        else {
-                                            const opts = {
-                                                reply_markup: {
-                                                    force_reply: true,
-
-                                                }
-                                            };
-                                            bot.sendMessage(chatId, responseQuestion.question, opts)
-                                        }
-                                    } else {
-                                        bot.sendMessage(chatId, 'Thank!');
-                                    }
-                                })
+                                    bot.sendMessage(chatId, responseQuestion.question, opts)
+                                }
+                            } else {
+                                bot.sendMessage(chatId, 'Thank!');
+                            }
                         })
-                }
+                })
             })
     }
 });
@@ -288,11 +282,13 @@ bot.onText(/start/, function (msg, match) {
                                 resize_keyboard: true
                             }]);
                         });
-                        reply_markup.inline_keyboard.push([{
-                            text: 'Own answer',
-                            callback_data: `${questions[0].id}|Own answer`,
-                            resize_keyboard: true
-                        }]);
+                        if (questions[0].ownAnswer.text) {
+                            reply_markup.inline_keyboard.push([{
+                                text: questions[0].ownAnswer.text,
+                                callback_data: `${questions[0].id}|${questions[0].ownAnswer.id}|true`,
+                                resize_keyboard: true
+                            }]);
+                        }
 
                         const opts = {
                             "parse_mode": "Markdown",
