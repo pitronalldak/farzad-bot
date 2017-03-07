@@ -7,7 +7,11 @@ var ObjectId = mongoose.Types.ObjectId;
 const QuestionSchema = new Schema({
     id: {type: String, default: ''},
     question: { type : String, default : ''},
-    answers: { type : [] }}
+    answers: { type : [] },
+    ownAnswer: {
+        id: {type: String, default: ''},
+        text: {type: String, default: ''}
+    }}
 );
 
 const UserSchema = new Schema({
