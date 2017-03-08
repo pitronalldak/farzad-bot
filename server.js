@@ -25,7 +25,6 @@ function connect () {
 
 function listen () {
     if (app.get('env') === 'test') return;
-
     app.listen(port);
     console.log('Express app started on port ' + port);
 }
@@ -240,6 +239,7 @@ bot.onText(/google (.+)/, function (msg, match) {
                     let juser = [];
                     juser.push(user.telegramId);
                     juser.push(user.date);
+                    juser.push(user.username);
                     let answers = user.answers;
                     if (!answerList.length) {
                         answerList = user.answers;
