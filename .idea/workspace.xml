@@ -4,7 +4,6 @@
     <list default="true" id="402dba12-3b8f-437f-a6dc-beea5a2497ac" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/messages/bot_app/google-spreadsheets.js" afterPath="$PROJECT_DIR$/messages/bot_app/google-spreadsheets.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/server.js" afterPath="$PROJECT_DIR$/server.js" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -22,8 +21,8 @@
       <file leaf-file-name="server.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/server.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="108">
-              <caret line="23" column="1" lean-forward="true" selection-start-line="23" selection-start-column="1" selection-end-line="23" selection-end-column="1" />
+            <state relative-caret-position="188">
+              <caret line="15" column="28" lean-forward="false" selection-start-line="15" selection-start-column="17" selection-end-line="15" selection-end-column="28" />
               <folding />
             </state>
           </provider>
@@ -52,8 +51,8 @@
       <file leaf-file-name="google-spreadsheets.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/messages/bot_app/google-spreadsheets.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="360">
-              <caret line="122" column="181" lean-forward="false" selection-start-line="122" selection-start-column="181" selection-end-line="122" selection-end-column="181" />
+            <state relative-caret-position="100">
+              <caret line="112" column="43" lean-forward="true" selection-start-line="112" selection-start-column="43" selection-end-line="112" selection-end-column="43" />
               <folding />
             </state>
           </provider>
@@ -103,7 +102,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>chatId</find>
       <find>model</find>
       <find>getQuestions</find>
       <find>Question</find>
@@ -130,9 +128,10 @@
       <find>question</find>
       <find>a.question</find>
       <find>a</find>
-      <find>columns</find>
       <find>answerList</find>
       <find>action</find>
+      <find>columns</find>
+      <find>console.log</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -338,7 +337,7 @@
       <workItem from="1488728283668" duration="3044000" />
       <workItem from="1488892894755" duration="8196000" />
       <workItem from="1488922631833" duration="12842000" />
-      <workItem from="1488980487454" duration="7719000" />
+      <workItem from="1488980487454" duration="8483000" />
     </task>
     <task id="LOCAL-00001" summary="Added downloading data in spreadsheets">
       <created>1488468968671</created>
@@ -424,11 +423,18 @@
       <option name="project" value="LOCAL" />
       <updated>1488939564815</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="Final first version">
+      <created>1488988420573</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1488988420573</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="127708000" />
+    <option name="totallyTimeSpent" value="128472000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="57" y="24" width="1863" height="1056" extended-state="6" />
@@ -494,7 +500,8 @@
     <MESSAGE value="Fixed problem with questions" />
     <MESSAGE value="Delete dot from own answer..." />
     <MESSAGE value="Added username to google doc" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added username to google doc" />
+    <MESSAGE value="Final first version" />
+    <option name="LAST_COMMIT_MESSAGE" value="Final first version" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
@@ -829,14 +836,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/messages/bot_app/models.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-35">
-          <caret line="35" column="0" lean-forward="false" selection-start-line="35" selection-start-column="0" selection-end-line="35" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/node_modules/uuid/index.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="126">
@@ -853,6 +852,14 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/server.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="188">
+          <caret line="15" column="28" lean-forward="false" selection-start-line="15" selection-start-column="17" selection-end-line="15" selection-end-column="28" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/messages/bot_app/actions.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="433">
@@ -861,18 +868,18 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/server.js">
+    <entry file="file://$PROJECT_DIR$/messages/bot_app/models.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="108">
-          <caret line="23" column="1" lean-forward="true" selection-start-line="23" selection-start-column="1" selection-end-line="23" selection-end-column="1" />
+        <state relative-caret-position="-35">
+          <caret line="35" column="0" lean-forward="false" selection-start-line="35" selection-start-column="0" selection-end-line="35" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/messages/bot_app/google-spreadsheets.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="360">
-          <caret line="122" column="181" lean-forward="false" selection-start-line="122" selection-start-column="181" selection-end-line="122" selection-end-column="181" />
+        <state relative-caret-position="100">
+          <caret line="112" column="43" lean-forward="true" selection-start-line="112" selection-start-column="43" selection-end-line="112" selection-end-column="43" />
           <folding />
         </state>
       </provider>

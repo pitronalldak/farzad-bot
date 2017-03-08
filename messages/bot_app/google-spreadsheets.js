@@ -114,13 +114,11 @@ const listMajors = (userList, columns) => (
     (auth) => {
         const sheets = google.sheets('v4');
         const values= [columns];
-        console.log(values);
         userList.forEach(user => values.push(user));
-        console.log(values);
         sheets.spreadsheets.values.update({
             valueInputOption: 'USER_ENTERED',
             auth: auth,
-            spreadsheetId: '15xQEWvKK88W4eALxThmtHIzsdPXFqfYHir8QvjH8Jq0', // test: 15xQEWvKK88W4eALxThmtHIzsdPXFqfYHir8QvjH8Jq0 origin: 1LOUGqVKIm-crpOjIgTPUY7QlY6ubaSyclRZjqsGUx2U
+            spreadsheetId: '1LOUGqVKIm-crpOjIgTPUY7QlY6ubaSyclRZjqsGUx2U', // test: 15xQEWvKK88W4eALxThmtHIzsdPXFqfYHir8QvjH8Jq0 origin: 1LOUGqVKIm-crpOjIgTPUY7QlY6ubaSyclRZjqsGUx2U
             range: `A1:${toLetters(columns.length + 50)}${userList.length + 1}`,
             resource: {values}
         }, function (err, response) {
