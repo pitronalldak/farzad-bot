@@ -19,8 +19,8 @@ connect()
 
 function connect () {
     const options = { server: { socketOptions: { keepAlive: 1 } } };
-    return mongoose.connect('mongodb://bot:Matwey12@ds145019.mlab.com:45019/heroku_zlrrx207').connection;
-    // return mongoose.connect('mongodb://bot:bot@127.0.0.1:27017/bot').connection;
+    // return mongoose.connect('mongodb://bot:Matwey12@ds145019.mlab.com:45019/heroku_zlrrx207').connection;
+    return mongoose.connect('mongodb://bot:bot@127.0.0.1:27017/bot').connection;
 }
 
 function listen () {
@@ -32,7 +32,7 @@ function listen () {
 const TelegramBot = require('node-telegram-bot-api');
 
 // replace the value below with the Telegram token you receive from @BotFather
-const token = '330486268:AAEEi7yURFX0EZQRE7EhylamB1-WaJi5ljg'; //test: 330486268:AAEEi7yURFX0EZQRE7EhylamB1-WaJi5ljg origin: 350720484:AAEgITsnyA0ZIFgQ46ivEq7Sp2VTrt4YDUg
+const token = '350720484:AAEgITsnyA0ZIFgQ46ivEq7Sp2VTrt4YDUg'; //test: 330486268:AAEEi7yURFX0EZQRE7EhylamB1-WaJi5ljg origin: 350720484:AAEgITsnyA0ZIFgQ46ivEq7Sp2VTrt4YDUg
 
 // Create a bot that uses 'polling' to fetch new updates
 
