@@ -230,32 +230,30 @@ bot.onText(/google (.+)/, function (msg, match) {
     const password = match[1];
     const chatId = msg.chat.id;
     if (password === PASSWORD) {
-        action.getUsers()
-            .then((users) => {
-                let userList = [];
-                let columns = [];
-                let answerList = [];
-                for (let user of users) {
-                    let juser = [];
-                    juser.push(user.telegramId);
-                    juser.push(user.date);
-                    juser.push(user.username);
-                    let answers = user.answers;
-                    if (!answerList.length) {
-                        answerList = user.answers;
-                    }
-                    for (let answer of answers) {
-                        juser.push(answer.answer);
-                    }
-                    userList.push(juser);
-                }
-
-                columns.push('telegramId', 'date');
-                for (let a of answerList) {
-                    columns.push(a.question);
-                }
-                postSpreadSheets(userList, columns);
-                bot.sendMessage(chatId, `Migration complete!`)
+        action.getQuestions()
+            .then((questions) => {
+                action.getUsers()
+                    .then((users) => {
+                        let userList = [];
+                        let columns = [];
+                        for (let user of users) {
+                            let juser = [];
+                            juser.push(user.telegramId);
+                            juser.push(user.date);
+                            juser.push(user.username);
+                            let answers = user.answers;
+                            for (let answer of answers) {
+                                juser.push(answer.answer);
+                            }
+                            userList.push(juser);
+                        }
+                        columns.push('telegramId', 'date','Username');
+                        for (let a of questions) {
+                            columns.push(a.question);
+                        }
+                        postSpreadSheets(userList, columns);
+                        bot.sendMessage(chatId, `Migration complete!`)
+                    });
             });
     } else {
         bot.sendMessage(chatId, `Wrong password!`)
