@@ -317,7 +317,18 @@ bot.onText(/google (.+)/, function (msg, match) {
                             juser.push(user.username);
                             let answers = user.answers;
                             for (let answer of answers) {
-                                juser.push(answer.answer);
+                                for (let question of questions) {
+                                    if (question.question == answer.question) {
+                                        let qanswers = question.answers;
+                                        console.log(qanswers);
+                                            for (let qanswer of qanswers) {
+                                                if (qanswer.question == answer.question) {
+
+                                                }
+                                            }
+                                        juser.push(qanswers.findIndex(a => a == answer.answer));
+                                    }
+                                }
                             }
                             userList.push(juser);
                         }
