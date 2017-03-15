@@ -235,8 +235,7 @@ bot.onText(/send (.+)/, function (msg, match) {
             .then((users) => {
                 let unfinishedUsers = [];
                 for (let user of users) {
-                    let answers = user.answers;
-                    for (let answer of answers) {
+                    for (let answer of user.answers) {
                         if (!answer) {
                             unfinishedUsers.push = user;
                         }
