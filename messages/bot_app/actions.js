@@ -27,6 +27,14 @@ exports.createQuestion = async(function* (text, ownAnswer) {
     preData.forEach((a, key) => data.answers.push({id: key + 1, text: a}));
     const question = new Question(data);
 
+    this.getUsers()
+        .then((users) => {
+            for (let user of users) {
+                user.answers.push({"answer":"","answer":"","questionId": data.id,"question": data.question});
+                user.save();
+            }
+        });
+
     try {
         yield question.save();
     } catch (err) {
@@ -60,6 +68,7 @@ exports.createUser = async(function* (data) {
                 date: moment().format('MMMM Do YYYY, h:mm:ss a'),
                 username: data.from.username,
                 telegramId: data.from.id,
+                chatId: data.chat.id,
                 answers: []
             };
 
@@ -69,12 +78,11 @@ exports.createUser = async(function* (data) {
                         user.answers = [];
                         user.date = moment().format('MMMM Do YYYY, h:mm:ss a');
                         questions.forEach(q => user.answers.push({question: q.question, questionId: q._id}));
-
+                        user.chatId = userData.chatId;
                         return user.save();
                     } else {
                         questions.forEach(q => userData.answers.push({question: q.question, questionId: q._id}));
                         const newUser = new User(userData);
-
                         return newUser.save();
                     }
                 });

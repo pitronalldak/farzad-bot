@@ -19,8 +19,8 @@ connect()
 
 function connect () {
     const options = { server: { socketOptions: { keepAlive: 1 } } };
-    // return mongoose.connect('mongodb://bot:Matwey12@ds145019.mlab.com:45019/heroku_zlrrx207').connection;
-    return mongoose.connect('mongodb://bot:bot@127.0.0.1:27017/bot').connection;
+    return mongoose.connect('mongodb://bot:Matwey12@ds145019.mlab.com:45019/heroku_zlrrx207').connection;
+    // return mongoose.connect('mongodb://bot:bot@127.0.0.1:27017/bot').connection;
 }
 
 function listen () {
@@ -32,12 +32,13 @@ function listen () {
 const TelegramBot = require('node-telegram-bot-api');
 
 // replace the value below with the Telegram token you receive from @BotFather
-const token = '350720484:AAEgITsnyA0ZIFgQ46ivEq7Sp2VTrt4YDUg'; //test: 330486268:AAEEi7yURFX0EZQRE7EhylamB1-WaJi5ljg origin: 350720484:AAEgITsnyA0ZIFgQ46ivEq7Sp2VTrt4YDUg
+const token = '330486268:AAEEi7yURFX0EZQRE7EhylamB1-WaJi5ljg'; //test: 330486268:AAEEi7yURFX0EZQRE7EhylamB1-WaJi5ljg origin: 350720484:AAEgITsnyA0ZIFgQ46ivEq7Sp2VTrt4YDUg
 
 // Create a bot that uses 'polling' to fetch new updates
-
 const bot = new TelegramBot(token, {polling: true});
 
+
+//Show info on screen
 bot.onText(/info/, function (msg, match) {
     const chatId = msg.chat.id;
 
@@ -47,8 +48,74 @@ bot.onText(/info/, function (msg, match) {
         '-add_question: password|question{answer/answer/answer}|own custom variant- Create new question with options and input answer.\n \n' +
         '-remove password- Remove all questions from interview.\n \n' +
         '-info- Get commands list.\n \n' +
-        '-google password- Download database to google doc.';
+        '-google password- Download database to google spreadsheet.\n \n' +
+        '-send password- Send all unanswered questions and added afterwards to all users have ever participated.';
     bot.sendMessage(chatId, text);
+});
+
+bot.on('message', msg => {
+    if (msg.reply_to_message) {
+
+        const telegramId = msg.reply_to_message.chat.id;
+        const question = msg.reply_to_message.text;
+        const answer = msg.text;
+
+        action.getQuestions()
+            .then((questions) => {
+                action.putAnswer(telegramId, question, answer)
+                    .then(() => {
+                        action.getUser(telegramId)
+                            .then((user) => {
+
+                                const chatId = msg.chat.id;
+                                const opts = {
+                                    reply_markup: {
+                                        inline_keyboard: []
+                                    }
+                                };
+                                let responseQuestion;
+                                let isNext = false;
+                                for (let item of user.answers) {
+                                    if (!item.answer && item.question !== question) {
+                                        responseQuestion = questions.find(q => q.question == item.question);
+                                        isNext = true;
+                                        break
+                                    }
+                                }
+
+                                if (isNext) {
+                                    if (responseQuestion.answers.length) {
+                                        responseQuestion.answers.forEach(answer => {
+                                            opts.reply_markup.inline_keyboard.push([{
+                                                text: answer.text,
+                                                callback_data: `${responseQuestion.id}|${answer.id}`,
+                                                resize_keyboard: true
+                                            }])
+                                        });
+                                        if (responseQuestion.ownAnswer.text) {
+                                            opts.reply_markup.inline_keyboard.push([{
+                                                text: responseQuestion.ownAnswer.text,
+                                                callback_data: `${responseQuestion.id}|${responseQuestion.ownAnswer.id}|true`
+                                            }]);
+                                        }
+                                        bot.sendMessage(chatId, responseQuestion.question, opts);
+                                    }
+                                    else {
+                                        const opts = {
+                                            reply_markup: {
+                                                force_reply: true,
+
+                                            }
+                                        };
+                                        bot.sendMessage(chatId, responseQuestion.question, opts)
+                                    }
+                                } else {
+                                    bot.sendMessage(chatId, 'Thank you!');
+                                }
+                            })
+                    })
+            })
+    }
 });
 
 bot.on('callback_query', callbackQuery => {
@@ -148,7 +215,7 @@ bot.onText(/add_question: (.+)/, function (msg, match) {
     }
 });
 
-// Remove all questions
+// Remove all questions from database
 bot.onText(/remove (.+)/, function (msg, match) {
     const password = match[1];
     const chatId = msg.chat.id;
@@ -159,73 +226,80 @@ bot.onText(/remove (.+)/, function (msg, match) {
     }
 });
 
-bot.on('message', msg => {
-    if (msg.reply_to_message) {
-
-        const telegramId = msg.reply_to_message.chat.id;
-        const question = msg.reply_to_message.text;
-        const answer = msg.text;
-        const chatId = msg.chat.id;
-
-        action.getQuestions()
-            .then((questions) => {
-             action.putAnswer(telegramId, question, answer)
-                 .then(() => {
-                    action.getUser(telegramId)
-                        .then((user) => {
-
-                            const chatId = msg.chat.id;
-                            const opts = {
-                                reply_markup: {
-                                    inline_keyboard: []
-                                }
+//Send all unanswered questions and added afterwards to all users have ever participated
+bot.onText(/send (.+)/, function (msg, match) {
+    const password = match[1];
+    const chatId = msg.chat.id;
+    if (password === PASSWORD) {
+        action.getUsers()
+            .then((users) => {
+                let unfinishedUsers = [];
+                for (let user of users) {
+                    let answers = user.answers;
+                    for (let answer of answers) {
+                        if (!answer) {
+                            unfinishedUsers.push = user;
+                        }
+                        console.log(unfinishedUsers);
+                    }
+                }
+                for (let user of unfinishedUsers) {
+                    let answers = user.answers;
+                    for (let answer of answers) {
+                        if (!answer.answer) {
+                            const reply_markup = {
+                                inline_keyboard: []
                             };
-                            let responseQuestion;
-                            let isNext = false;
-                            for (let item of user.answers) {
-                                if (!item.answer && item.question !== question) {
-                                    responseQuestion = questions.find(q => q.question == item.question);
-                                    isNext = true;
-                                    break
-                                }
-                            }
+                            action.getQuestions()
+                                .then((questions) => {
+                                    for (let i = 0; i < questions.length; i++) {
+                                        if ((questions[i].question) === answer.question) {
+                                            if (questions[i].answers.length) {
+                                                questions[i].answers.forEach(answer => {
+                                                    reply_markup.inline_keyboard.push([{
+                                                        text: answer.text,
+                                                        callback_data: `${questions[i].id}|${answer.id}`,
+                                                        resize_keyboard: true
+                                                    }]);
+                                                });
+                                                if (questions[i].ownAnswer.text) {
+                                                    reply_markup.inline_keyboard.push([{
+                                                        text: questions[i].ownAnswer.text,
+                                                        callback_data: `${questions[i].id}|${questions[i].ownAnswer.id}|true`,
+                                                        resize_keyboard: true
+                                                    }]);
+                                                }
+                                                const opts = {
+                                                    "parse_mode": "Markdown",
+                                                    "reply_markup": JSON.stringify(reply_markup)
+                                                };
 
-                            if (isNext) {
-                                if (responseQuestion.answers.length) {
-                                    responseQuestion.answers.forEach(answer => {
-                                        opts.reply_markup.inline_keyboard.push([{
-                                            text: answer.text,
-                                            callback_data: `${responseQuestion.id}|${answer.id}`,
-                                            resize_keyboard: true
-                                        }])
-                                    });
-                                    if (responseQuestion.ownAnswer.text) {
-                                        opts.reply_markup.inline_keyboard.push([{
-                                            text: responseQuestion.ownAnswer.text,
-                                            callback_data: `${responseQuestion.id}|${responseQuestion.ownAnswer.id}|true`
-                                        }]);
-                                    }
-                                    bot.sendMessage(chatId, responseQuestion.question, opts);
-                                }
-                                else {
-                                    const opts = {
-                                        reply_markup: {
-                                            force_reply: true,
+                                                bot.sendMessage(user, questions[i].question, opts);
+                                                bot.sendMessage(chatId, `Sent successfully!`)
+                                            } else {
+                                                const opts = {
+                                                    reply_markup: {
+                                                        force_reply: true,
+                                                    }
+                                                };
 
+                                                bot.sendMessage(user, questions[i].question, opts);
+                                                bot.sendMessage(chatId, `Sent successfully!`)
+                                            }
+                                            break
                                         }
-                                    };
-                                    bot.sendMessage(chatId, responseQuestion.question, opts)
-                                }
-                            } else {
-                                bot.sendMessage(chatId, 'Thank you!');
-                            }
-                        })
-                })
-            })
+                                    }
+                                })
+                        }
+                    }
+                }
+            });
+    } else {
+        bot.sendMessage(chatId, `Wrong password!`)
     }
 });
 
-//object for google docs
+//Export to google spreadsheet
 bot.onText(/google (.+)/, function (msg, match) {
     const password = match[1];
     const chatId = msg.chat.id;
@@ -251,6 +325,7 @@ bot.onText(/google (.+)/, function (msg, match) {
                         for (let a of questions) {
                             columns.push(a.question);
                         }
+                        columns.push('total number of questions - ' + String(questions.length),'total number of users - ' + String(users.length))
                         postSpreadSheets(userList, columns);
                         bot.sendMessage(chatId, `Migration complete!`)
                     });
@@ -260,6 +335,7 @@ bot.onText(/google (.+)/, function (msg, match) {
     }
 });
 
+//start the survey
 bot.onText(/start/, function (msg, match) {
     action.createUser(msg)
         .then(() =>
@@ -305,3 +381,5 @@ bot.onText(/start/, function (msg, match) {
                 })
         )
 });
+
+

@@ -18,6 +18,7 @@ const UserSchema = new Schema({
     date: {type: String, default: ''},
     username: {type: String, default: ''},
     telegramId: {type: String, default: ''},
+    chatId: {type: String, default: ''},
     answers: [{
         answerId: {type: String, default: ''},
         question: {type: String, default: ''},
