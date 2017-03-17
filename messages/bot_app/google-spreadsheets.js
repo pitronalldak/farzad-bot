@@ -119,7 +119,7 @@ const listMajors = (userList, columns) => (
             valueInputOption: 'USER_ENTERED',
             auth: auth,
             spreadsheetId: '15xQEWvKK88W4eALxThmtHIzsdPXFqfYHir8QvjH8Jq0', // test: 15xQEWvKK88W4eALxThmtHIzsdPXFqfYHir8QvjH8Jq0 origin: 1LOUGqVKIm-crpOjIgTPUY7QlY6ubaSyclRZjqsGUx2U
-            range: `A1:${toLetters(columns.length)}${userList.length + 1}`,
+            range: `A1:${toLetters(columns.length+100)}${userList.length + 1}`,
             resource: {values}
         }, function (err, response) {
             if (err) {

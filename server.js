@@ -1,5 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const moment = require('moment');
 const app = express();
 const {postSpreadSheets} = require('./messages/bot_app/google-spreadsheets');
 
@@ -39,20 +40,26 @@ const bot = new TelegramBot(token, {polling: true});
 
 
 //Show info on screen
-bot.onText(/info/, function (msg, match) {
+bot.onText(/info (.+)/, function (msg, match) {
+    const password = match[1];
     const chatId = msg.chat.id;
-
-    const text = '-start- Started your interview \n \n' +
-        '-add_question: password|question{answer/answer/answer}- Create new question with options.\n \n' +
-        '-add_question: password|question- Create new question without input answer.\n \n' +
-        '-add_question: password|question{answer/answer/answer}|own custom variant- Create new question with options and input answer.\n \n' +
-        '-remove password- Remove all questions from interview.\n \n' +
-        '-info- Get commands list.\n \n' +
-        '-google password- Download database to google spreadsheet.\n \n' +
-        '-send password- Send all unanswered questions and added afterwards to all users have ever participated.';
-    bot.sendMessage(chatId, text);
+    if (password === PASSWORD) {
+        const text = '-start- Started your interview \n \n' +
+            '-add_question: password|question{answer/answer/answer}- Create new question with options.\n \n' +
+            '-add_question: password|question- Create new question without input answer.\n \n' +
+            '-add_question: password|question{answer/answer/answer}|own custom variant- Create new question with options and input answer.\n \n' +
+            '-remove password- Remove all questions from interview.\n \n' +
+            '-removequestionbyname: password|question- Remove the question with typed name from an interview.\n \n' +
+            '-info password- Get commands list.\n \n' +
+            '-google password- Download database to google spreadsheet.\n \n' +
+            '-send password- Send all unanswered questions and added afterwards to all users have ever participated.';
+        bot.sendMessage(chatId, text);
+    } else {
+        bot.sendMessage(chatId, `Wrong password!`)
+    }
 });
 
+//Bot reaction to msg, put answer to the db, send next question or thank you
 bot.on('message', msg => {
     if (msg.reply_to_message) {
 
@@ -118,6 +125,7 @@ bot.on('message', msg => {
     }
 });
 
+//Bot reaction to button tap, put answer to the db, send next question or thank you
 bot.on('callback_query', callbackQuery => {
     const telegramId = callbackQuery.from.id;
     const message = callbackQuery.message;
@@ -144,7 +152,7 @@ bot.on('callback_query', callbackQuery => {
             } else {
                 const answer = questions.find(q => q.id == questionId).answers
                     .find(a => a.id == answerId).text;
-                action.putAnswer(telegramId, question, answer)
+                action.putAnswer(telegramId, question, answer, answerId)
                     .then(() => {
                         action.getUser(telegramId)
                             .then((user) => {
@@ -201,21 +209,36 @@ bot.on('callback_query', callbackQuery => {
         })
 });
 
-// Create interview
+// Create interview, put question to the db (questions)
 bot.onText(/add_question: (.+)/, function (msg, match) {
     const data = match[1].split('|');
     const password = data[0];
     const question = data[1];
+    const questionitself = question.split('{')[0];
     const ownAnswer = data[2];
     const chatId = msg.chat.id;
-    if (password === PASSWORD) {
-        action.createQuestion(question, ownAnswer).then(() => bot.sendMessage(chatId, `Question added!`));
-    } else {
-        bot.sendMessage(chatId, `Wrong password!`)
-    }
+    let stopadding = false;
+    action.getQuestions()
+        .then((questions) => {
+            for (let q of questions) {
+                if (q.question == questionitself) {
+                    stopadding = true;
+                }
+            }
+            if (stopadding) {
+                bot.sendMessage(chatId, `This question already exists!`);
+            } else {
+                if (password === PASSWORD) {
+                    action.createQuestion(question, ownAnswer).then(() => bot.sendMessage(chatId, `Question added!`));
+                } else {
+                    bot.sendMessage(chatId, `Wrong password!`)
+                }
+            }
+        });
+
 });
 
-// Remove all questions from database
+// Remove all questions from the db
 bot.onText(/remove (.+)/, function (msg, match) {
     const password = match[1];
     const chatId = msg.chat.id;
@@ -226,7 +249,26 @@ bot.onText(/remove (.+)/, function (msg, match) {
     }
 });
 
-//Send all unanswered questions and added afterwards to all users have ever participated
+// Remove last question from the db (questions)
+bot.onText(/removequestionbyname: (.+)/, function (msg, match) {
+    const data = match[1].split('|');
+    const password = data[0];
+    const question = data[1];
+    const chatId = msg.chat.id;
+    if (password === PASSWORD) {
+        action.findTheQuestion(question)
+            .then((thequestion) => {
+            if (thequestion) {
+                action.removeTheQuestion(question).then(() => bot.sendMessage(chatId, `The question was removed!`));
+            }
+            else {bot.sendMessage(chatId, `No such question!`)}
+            });
+    } else {
+        bot.sendMessage(chatId, `Wrong password!`)
+    }
+});
+
+//Send all unanswered questions and added afterwards to all users have ever participated, looks for users, who has unanswered question, takes them and sends first unanswered question
 bot.onText(/send (.+)/, function (msg, match) {
     const password = match[1];
     const chatId = msg.chat.id;
@@ -236,69 +278,64 @@ bot.onText(/send (.+)/, function (msg, match) {
                 let unfinishedUsers = [];
                 for (let user of users) {
                     for (let answer of user.answers) {
-                        if (!answer) {
-                            unfinishedUsers.push = user;
+                        if (!answer.answer) {
+                            unfinishedUsers.push(user);
                         }
-                        console.log(unfinishedUsers);
                     }
                 }
-                for (let user of unfinishedUsers) {
-                    let answers = user.answers;
-                    for (let answer of answers) {
-                        if (!answer.answer) {
+                action.getQuestions()
+                    .then((questions) => {
+                        for (let user of unfinishedUsers) {
+                            let qid = user.answers.filter(answer => !answer.answer)[0].questionId;
+                            console.log(qid);
                             const reply_markup = {
                                 inline_keyboard: []
                             };
-                            action.getQuestions()
-                                .then((questions) => {
-                                    for (let i = 0; i < questions.length; i++) {
-                                        if ((questions[i].question) === answer.question) {
-                                            if (questions[i].answers.length) {
-                                                questions[i].answers.forEach(answer => {
-                                                    reply_markup.inline_keyboard.push([{
-                                                        text: answer.text,
-                                                        callback_data: `${questions[i].id}|${answer.id}`,
-                                                        resize_keyboard: true
-                                                    }]);
-                                                });
-                                                if (questions[i].ownAnswer.text) {
-                                                    reply_markup.inline_keyboard.push([{
-                                                        text: questions[i].ownAnswer.text,
-                                                        callback_data: `${questions[i].id}|${questions[i].ownAnswer.id}|true`,
-                                                        resize_keyboard: true
-                                                    }]);
-                                                }
-                                                const opts = {
-                                                    "parse_mode": "Markdown",
-                                                    "reply_markup": JSON.stringify(reply_markup)
-                                                };
 
-                                                bot.sendMessage(user, questions[i].question, opts);
-                                                bot.sendMessage(chatId, `Sent successfully!`)
-                                            } else {
-                                                const opts = {
-                                                    reply_markup: {
-                                                        force_reply: true,
-                                                    }
-                                                };
-
-                                                bot.sendMessage(user, questions[i].question, opts);
-                                                bot.sendMessage(chatId, `Sent successfully!`)
-                                            }
-                                            break
-                                        }
+                                let nextQuestion = (questions.find(question => question.id == qid));
+                                    console.log(nextQuestion);
+                                if ((nextQuestion === undefined) || (nextQuestion === null)) {
+                                    nextQuestion = questions[0];
+                                }
+                                if (nextQuestion.answers.length) {
+                                    nextQuestion.answers.forEach(answer => {
+                                        reply_markup.inline_keyboard.push([{
+                                            text: answer.text,
+                                            callback_data: `${nextQuestion.id}|${answer.id}`,
+                                            resize_keyboard: true
+                                        }]);
+                                    });
+                                    if (nextQuestion.ownAnswer.text) {
+                                        reply_markup.inline_keyboard.push([{
+                                            text: nextQuestion.ownAnswer.text,
+                                            callback_data: `${nextQuestion.id}|${nextQuestion.ownAnswer.id}|true`,
+                                            resize_keyboard: true
+                                        }]);
                                     }
-                                })
+                                    const opts = {
+                                        "parse_mode": "Markdown",
+                                        "reply_markup": JSON.stringify(reply_markup)
+                                    };
+
+                                    bot.sendMessage(user.chatId, nextQuestion.question, opts);
+                                } else {
+                                    const opts = {
+                                        reply_markup: {
+                                            force_reply: true,
+                                        }
+                                    };
+                                    bot.sendMessage(user.chatId, nextQuestion.question, opts);
+                                }
                         }
-                    }
-                }
+                });
+                bot.sendMessage(chatId, `Sent successfully!`);
             });
     } else {
         bot.sendMessage(chatId, `Wrong password!`)
     }
 });
 
-//Export to google spreadsheet
+//Export to google spreadsheet, takes info from the DB(users), sort it and insert it in the google spreadsheet
 bot.onText(/google (.+)/, function (msg, match) {
     const password = match[1];
     const chatId = msg.chat.id;
@@ -314,22 +351,20 @@ bot.onText(/google (.+)/, function (msg, match) {
                             juser.push(user.telegramId);
                             juser.push(user.date);
                             juser.push(user.username);
-                            let answers = user.answers;
-                            for (let answer of answers) {
-                                for (let question of questions) {
-                                    if (question.question == answer.question) {
-                                        let qanswers = question.answers;
-                                        console.log(qanswers);
-                                            for (let qanswer of qanswers) {
-                                                if (qanswer.question == answer.question) {
-
-                                                }
-                                            }
-                                        juser.push(qanswers.findIndex(a => a == answer.answer));
-                                    }
-                                }
+                            for (let answer of user.answers) {
+                                let answ = '';
+                                if (answer.answerId) {answ = answer.answerId} else {answ = answer.answer};
+                                juser.push(answ);
                             }
                             userList.push(juser);
+                            userList.sort(function (a, b) {
+                                if (moment().diff(a[1]) > moment().diff(b[1])) {
+                                    return -1;
+                                }
+                                if (moment().diff(a[1]) < moment().diff(b[1])) {
+                                    return 1;
+                                }
+                            })
                         }
                         columns.push('telegramId', 'date','Username');
                         for (let a of questions) {
@@ -345,7 +380,7 @@ bot.onText(/google (.+)/, function (msg, match) {
     }
 });
 
-//start the survey
+//start the survey, gets all questions from the DB(questions), send first to the user with params
 bot.onText(/start/, function (msg, match) {
     action.createUser(msg)
         .then(() =>
