@@ -8,7 +8,7 @@ const { wrap: async } = require('co');
 
 const Question = mongoose.model('Question');
 const User = mongoose.model('User');
-
+const uuid = require('uuid/v4');
 
 exports.createQuestion = async(function* (text, ownAnswer) {
     const data = {};
@@ -20,7 +20,7 @@ exports.createQuestion = async(function* (text, ownAnswer) {
     } else {
         preData = [];
     }
-    data.id = Math.random();
+    data.id = uuid.v4();
     data.answers = [];
 
     if (ownAnswer) data.ownAnswer = {text: ownAnswer, id: 0};
@@ -56,12 +56,10 @@ exports.getUsers = async(function* () {
 exports.removeQuestions = async(function* () {
     Question.list()
         .then(questions => {
-            console.log(questions);
             questions.map((question) => {
                 question.question = 'deleted';
                 return question.save();
             });
-            console.log(questions);
         });
 });
 

@@ -83,13 +83,12 @@ bot.on('message', msg => {
                                 let responseQuestion;
                                 let isNext = false;
                                 for (let item of user.answers) {
-                                    if (!item.answer && item.question !== question) {
+                                    if (!item.answer && item.question !== question && item.question !== 'deleted') {
                                         responseQuestion = questions.find(q => q.question == item.question);
                                         isNext = true;
                                         break
                                     }
                                 }
-
                                 if (isNext) {
                                     if (responseQuestion.answers.length) {
                                         responseQuestion.answers.forEach(answer => {
@@ -167,7 +166,7 @@ bot.on('callback_query', callbackQuery => {
                                 let isNext = false;
 
                                 for (let item of user.answers) {
-                                    if (!item.answer && item.question !== question) {
+                                    if (!item.answer && item.question !== question && item.question !== 'deleted') {
                                         responseQuestion = questions.find(q => q.question == item.question);
                                         isNext = true;
                                         break
@@ -289,46 +288,51 @@ bot.onText(/send (.+)/, function (msg, match) {
                 action.getQuestions()
                     .then((questions) => {
                         for (let user of unfinishedUsers) {
-                            let qid = user.answers.filter(answer => !answer.answer)[0].questionId;
+                            let filter_answers = user.answers.filter(answer => !answer.answer);
+                            let i = 0;
+                            for (i; i < filter_answers.length; i++) {
+                                let questionitself = questions.filter(question => question.id == filter_answers[i].questionid)[0];
+                                console.log(questionitself);
+                                if ( questionitself.question !== 'deleted') break
+                            };
+                            let qid = filter_answers[i].questionId;
+                            console.log(user);
                             console.log(qid);
                             const reply_markup = {
                                 inline_keyboard: []
                             };
 
-                                let nextQuestion = (questions.find(question => question.id == qid));
-                                    console.log(nextQuestion);
-                                if ((nextQuestion === undefined) || (nextQuestion === null)) {
-                                    nextQuestion = questions[0];
+                            let nextQuestion = (questions.find(question => question.id == qid));
+                                console.log(nextQuestion);
+                            if (nextQuestion.answers.length) {
+                                nextQuestion.answers.forEach(answer => {
+                                    reply_markup.inline_keyboard.push([{
+                                        text: answer.text,
+                                        callback_data: `${nextQuestion.id}|${answer.id}`,
+                                        resize_keyboard: true
+                                    }]);
+                                });
+                                if (nextQuestion.ownAnswer.text) {
+                                    reply_markup.inline_keyboard.push([{
+                                        text: nextQuestion.ownAnswer.text,
+                                        callback_data: `${nextQuestion.id}|${nextQuestion.ownAnswer.id}|true`,
+                                        resize_keyboard: true
+                                    }]);
                                 }
-                                if (nextQuestion.answers.length) {
-                                    nextQuestion.answers.forEach(answer => {
-                                        reply_markup.inline_keyboard.push([{
-                                            text: answer.text,
-                                            callback_data: `${nextQuestion.id}|${answer.id}`,
-                                            resize_keyboard: true
-                                        }]);
-                                    });
-                                    if (nextQuestion.ownAnswer.text) {
-                                        reply_markup.inline_keyboard.push([{
-                                            text: nextQuestion.ownAnswer.text,
-                                            callback_data: `${nextQuestion.id}|${nextQuestion.ownAnswer.id}|true`,
-                                            resize_keyboard: true
-                                        }]);
-                                    }
-                                    const opts = {
-                                        "parse_mode": "Markdown",
-                                        "reply_markup": JSON.stringify(reply_markup)
-                                    };
+                                const opts = {
+                                    "parse_mode": "Markdown",
+                                    "reply_markup": JSON.stringify(reply_markup)
+                                };
 
-                                    bot.sendMessage(user.chatId, nextQuestion.question, opts);
-                                } else {
-                                    const opts = {
-                                        reply_markup: {
-                                            force_reply: true,
-                                        }
-                                    };
-                                    bot.sendMessage(user.chatId, nextQuestion.question, opts);
-                                }
+                                bot.sendMessage(user.chatId, nextQuestion.question, opts);
+                            } else {
+                                const opts = {
+                                    reply_markup: {
+                                        force_reply: true,
+                                    }
+                                };
+                                bot.sendMessage(user.chatId, nextQuestion.question, opts);
+                            }
                         }
                 });
                 bot.sendMessage(chatId, `Sent successfully!`);
@@ -394,19 +398,22 @@ bot.onText(/start/, function (msg, match) {
                     const reply_markup = {
                         inline_keyboard: []
                     };
-
-                    if (questions[0].answers.length) {
-                        questions[0].answers.forEach(answer => {
+                    let i = 0;
+                    for (i; i < questions.length; i++) {
+                        if (questions[i].question !== 'deleted') break
+                    }
+                    if (questions[i].answers.length) {
+                        questions[i].answers.forEach(answer => {
                             reply_markup.inline_keyboard.push([{
                                 text: answer.text,
-                                callback_data: `${questions[0].id}|${answer.id}`,
+                                callback_data: `${questions[i].id}|${answer.id}`,
                                 resize_keyboard: true
                             }]);
                         });
-                        if (questions[0].ownAnswer.text) {
+                        if (questions[i].ownAnswer.text) {
                             reply_markup.inline_keyboard.push([{
-                                text: questions[0].ownAnswer.text,
-                                callback_data: `${questions[0].id}|${questions[0].ownAnswer.id}|true`,
+                                text: questions[i].ownAnswer.text,
+                                callback_data: `${questions[i].id}|${questions[i].ownAnswer.id}|true`,
                                 resize_keyboard: true
                             }]);
                         }
@@ -416,7 +423,7 @@ bot.onText(/start/, function (msg, match) {
                             "reply_markup": JSON.stringify(reply_markup)
                         };
 
-                        bot.sendMessage(chatId, questions[0].question, opts);
+                        bot.sendMessage(chatId, questions[i].question, opts);
                     } else {
                         const opts = {
                             reply_markup: {
@@ -424,7 +431,7 @@ bot.onText(/start/, function (msg, match) {
 
                             }
                         };
-                        bot.sendMessage(chatId, questions[0].question, opts)
+                        bot.sendMessage(chatId, questions[i].question, opts)
                     }
                 })
         )
