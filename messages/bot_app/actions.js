@@ -54,17 +54,32 @@ exports.getUsers = async(function* () {
 });
 
 exports.removeQuestions = async(function* () {
-    return Question.remove();
+    Question.list()
+        .then(questions => {
+            console.log(questions);
+            questions.map((question) => {
+                question.question = 'deleted';
+                return question.save();
+            });
+            console.log(questions);
+        });
 });
 
-exports.findTheQuestion = async(function* (question) {
-    let q = question;
-    return Question.getQuestionByName(q);
+exports.findAndDeleteTheQuestion = async(function* (question) {
+        Question.getQuestionByName(question)
+        .then((thequestion) => {
+            if (thequestion) {
+                thequestion.question = 'deleted';
+                return thequestion.save();
+            } else {
+                return 1;
+            }
+        });
 });
 
-exports.removeTheQuestion = async(function* (question) {
-    Question.removeQuestionByName(question);
-});
+// exports.removeTheQuestion = async(function* (question) {
+//     Question.removeQuestionByName(question);
+// });
 
 exports.getUser = async(function* (telegramId) {
     return User.getUserById(telegramId);

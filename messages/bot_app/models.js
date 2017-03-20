@@ -39,10 +39,10 @@ QuestionSchema.statics = {
     getQuestionByName: function (question) {
         return (this.findOne({question}));
     },
-    removeQuestionByName: function (question) {
-        return this.findOne({question}).remove()
-            .exec();
-    },
+    // removeQuestionByName: function (question) {
+    //     return this.findOne({question}).remove()
+    //         .exec();
+    // },
     list: function (options) {
         return this.find()
             .exec();

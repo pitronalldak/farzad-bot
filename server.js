@@ -256,12 +256,15 @@ bot.onText(/removequestionbyname: (.+)/, function (msg, match) {
     const question = data[1];
     const chatId = msg.chat.id;
     if (password === PASSWORD) {
-        action.findTheQuestion(question)
-            .then((thequestion) => {
-            if (thequestion) {
-                action.removeTheQuestion(question).then(() => bot.sendMessage(chatId, `The question was removed!`));
-            }
-            else {bot.sendMessage(chatId, `No such question!`)}
+        action.findAndDeleteTheQuestion(question)
+            .then((answer) => {
+            console.log(answer);
+                if (answer == question) {
+                    {bot.sendMessage(chatId, `No such question!`)};
+                }
+                else {
+                    bot.sendMessage(chatId, `The question was removed!`);
+                }
             });
     } else {
         bot.sendMessage(chatId, `Wrong password!`)
