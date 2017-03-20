@@ -126,7 +126,7 @@ bot.on('callback_query', callbackQuery => {
                                         bot.sendMessage(chatId, responseQuestion.question, opts)
                                     }
                                 } else {
-                                    bot.sendMessage(chatId, 'Thank you!');
+                                    bot.sendMessage(chatId, 'سپاس!');
                                 }
                             })
                     })
@@ -217,7 +217,7 @@ bot.on('message', msg => {
                                     bot.sendMessage(chatId, responseQuestion.question, opts)
                                 }
                             } else {
-                                bot.sendMessage(chatId, 'Thank you!');
+                                bot.sendMessage(chatId, 'سپاس!');
                             }
                         })
                 })
