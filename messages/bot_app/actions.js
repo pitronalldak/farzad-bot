@@ -64,13 +64,13 @@ exports.removeQuestions = async(function* () {
 });
 
 exports.findAndDeleteTheQuestion = async(function* (question) {
-        Question.getQuestionByName(question)
-        .then((thequestion) => {
+    return Question.getQuestionByName(question)
+        .then(( thequestion ) => {
             if (thequestion) {
                 thequestion.question = 'deleted';
                 return thequestion.save();
             } else {
-                return 1;
+                throw 'No such question!';
             }
         });
 });

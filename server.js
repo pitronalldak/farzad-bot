@@ -20,8 +20,8 @@ connect()
 
 function connect () {
     const options = { server: { socketOptions: { keepAlive: 1 } } };
-    return mongoose.connect('mongodb://bot:Matwey12@ds145019.mlab.com:45019/heroku_zlrrx207').connection;
-    // return mongoose.connect('mongodb://bot:bot@127.0.0.1:27017/bot').connection;
+    // return mongoose.connect('mongodb://bot:Matwey12@ds145019.mlab.com:45019/heroku_zlrrx207').connection;
+    return mongoose.connect('mongodb://bot:bot@127.0.0.1:27017/bot').connection;
 }
 
 function listen () {
@@ -33,7 +33,7 @@ function listen () {
 const TelegramBot = require('node-telegram-bot-api');
 
 // replace the value below with the Telegram token you receive from @BotFather
-const token = '330486268:AAEEi7yURFX0EZQRE7EhylamB1-WaJi5ljg'; //test: 330486268:AAEEi7yURFX0EZQRE7EhylamB1-WaJi5ljg origin: 350720484:AAEgITsnyA0ZIFgQ46ivEq7Sp2VTrt4YDUg
+const token = '329116244:AAHDzSnwr49C2PIe4OES2HJgrZTB0QLqc_w'; //test: 330486268:AAEEi7yURFX0EZQRE7EhylamB1-WaJi5ljg origin: 350720484:AAEgITsnyA0ZIFgQ46ivEq7Sp2VTrt4YDUg dev: 329116244:AAHDzSnwr49C2PIe4OES2HJgrZTB0QLqc_w
 
 // Create a bot that uses 'polling' to fetch new updates
 const bot = new TelegramBot(token, {polling: true});
@@ -83,8 +83,9 @@ bot.on('message', msg => {
                                 let responseQuestion;
                                 let isNext = false;
                                 for (let item of user.answers) {
-                                    if (!item.answer && item.question !== question && item.question !== 'deleted') {
-                                        responseQuestion = questions.find(q => q.question == item.question);
+                                    let nextQuestion = questions.find(q => q.id == item.questionId);
+                                    if (!item.answer && item.question !== question && nextQuestion.question !== 'deleted') {
+                                        responseQuestion = nextQuestion;
                                         isNext = true;
                                         break
                                     }
@@ -166,8 +167,9 @@ bot.on('callback_query', callbackQuery => {
                                 let isNext = false;
 
                                 for (let item of user.answers) {
-                                    if (!item.answer && item.question !== question && item.question !== 'deleted') {
-                                        responseQuestion = questions.find(q => q.question == item.question);
+                                    let nextQuestion = questions.find(q => q.id == item.questionId);
+                                    if (!item.answer && item.question !== question && nextQuestion.question !== 'deleted') {
+                                        responseQuestion = nextQuestion;
                                         isNext = true;
                                         break
                                     }
@@ -256,21 +258,19 @@ bot.onText(/removequestionbyname: (.+)/, function (msg, match) {
     const chatId = msg.chat.id;
     if (password === PASSWORD) {
         action.findAndDeleteTheQuestion(question)
-            .then((answer) => {
-            console.log(answer);
-                if (answer == question) {
-                    {bot.sendMessage(chatId, `No such question!`)};
-                }
-                else {
-                    bot.sendMessage(chatId, `The question was removed!`);
-                }
-            });
+            .then(() => {
+                bot.sendMessage(chatId, `The question was removed!`);
+            })
+            .catch(error => {
+                bot.sendMessage(chatId, error);
+            })
     } else {
         bot.sendMessage(chatId, `Wrong password!`)
     }
 });
 
-//Send all unanswered questions and added afterwards to all users have ever participated, looks for users, who has unanswered question, takes them and sends first unanswered question
+//Send all unanswered questions and added afterwards to all users have ever participated, looks for users, who has unanswered question,
+// takes them and sends first unanswered question, excerpt 'deleted'
 bot.onText(/send (.+)/, function (msg, match) {
     const password = match[1];
     const chatId = msg.chat.id;
@@ -279,10 +279,14 @@ bot.onText(/send (.+)/, function (msg, match) {
             .then((users) => {
                 let unfinishedUsers = [];
                 for (let user of users) {
+                    let unfinish = false;
                     for (let answer of user.answers) {
                         if (!answer.answer) {
-                            unfinishedUsers.push(user);
+                            unfinish = true
                         }
+                    }
+                    if (unfinish) {
+                        unfinishedUsers.push(user);
                     }
                 }
                 action.getQuestions()
@@ -291,19 +295,15 @@ bot.onText(/send (.+)/, function (msg, match) {
                             let filter_answers = user.answers.filter(answer => !answer.answer);
                             let i = 0;
                             for (i; i < filter_answers.length; i++) {
-                                let questionitself = questions.filter(question => question.id == filter_answers[i].questionid)[0];
-                                console.log(questionitself);
-                                if ( questionitself.question !== 'deleted') break
+                                let questionitself = questions.filter(question => question.id == filter_answers[i].questionId);
+                                if ( questionitself[0].question !== 'deleted' ) break
                             };
                             let qid = filter_answers[i].questionId;
-                            console.log(user);
-                            console.log(qid);
                             const reply_markup = {
                                 inline_keyboard: []
                             };
 
                             let nextQuestion = (questions.find(question => question.id == qid));
-                                console.log(nextQuestion);
                             if (nextQuestion.answers.length) {
                                 nextQuestion.answers.forEach(answer => {
                                     reply_markup.inline_keyboard.push([{
