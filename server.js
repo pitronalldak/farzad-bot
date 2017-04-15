@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const moment = require('moment');
 const app = express();
-const {postSpreadSheets} = require('./messages/bot_app/google-spreadsheets');
+const { postSpreadSheets } = require('./messages/bot_app/google-spreadsheets');
 
 require("./messages/bot_app/models");
 
@@ -33,7 +33,11 @@ function listen () {
 const TelegramBot = require('node-telegram-bot-api');
 
 // replace the value below with the Telegram token you receive from @BotFather
-const token = '329116244:AAHDzSnwr49C2PIe4OES2HJgrZTB0QLqc_w'; //test: 330486268:AAEEi7yURFX0EZQRE7EhylamB1-WaJi5ljg origin: 350720484:AAEgITsnyA0ZIFgQ46ivEq7Sp2VTrt4YDUg dev: 329116244:AAHDzSnwr49C2PIe4OES2HJgrZTB0QLqc_w
+//test: 330486268:AAEEi7yURFX0EZQRE7EhylamB1-WaJi5ljg
+// origin: 350720484:AAEgITsnyA0ZIFgQ46ivEq7Sp2VTrt4YDUg
+// dev: 329116244:AAHDzSnwr49C2PIe4OES2HJgrZTB0QLqc_w
+// v2 dev: 360889127:AAEPjHX8IDZ3jaG4x-ATVwFxSymVfQ2ENmk
+const token = '360889127:AAEPjHX8IDZ3jaG4x-ATVwFxSymVfQ2ENmk';
 
 // Create a bot that uses 'polling' to fetch new updates
 const bot = new TelegramBot(token, {polling: true});
@@ -324,7 +328,7 @@ bot.onText(/send (.+)/, function (msg, match) {
                                     "reply_markup": JSON.stringify(reply_markup)
                                 };
 
-                                bot.sendMessage(user.chatId, nextQuestion.question, opts);
+	                            bot.sendMessage(user.chatId, nextQuestion.question, opts);
                             } else {
                                 const opts = {
                                     reply_markup: {
@@ -428,7 +432,6 @@ bot.onText(/start/, function (msg, match) {
                         const opts = {
                             reply_markup: {
                                 force_reply: true,
-
                             }
                         };
                         bot.sendMessage(chatId, questions[i].question, opts)

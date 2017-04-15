@@ -118,7 +118,11 @@ const listMajors = (userList, columns) => (
         sheets.spreadsheets.values.update({
             valueInputOption: 'USER_ENTERED',
             auth: auth,
-            spreadsheetId: '1TAidjIed5goBfdtIk81L955tSx-zyChioCHT2VzkdBg', // test: 15xQEWvKK88W4eALxThmtHIzsdPXFqfYHir8QvjH8Jq0 origin: 1LOUGqVKIm-crpOjIgTPUY7QlY6ubaSyclRZjqsGUx2U dev: 1TAidjIed5goBfdtIk81L955tSx-zyChioCHT2VzkdBg
+// test: 15xQEWvKK88W4eALxThmtHIzsdPXFqfYHir8QvjH8Jq0
+// origin: 1LOUGqVKIm-crpOjIgTPUY7QlY6ubaSyclRZjqsGUx2U
+// dev: 1TAidjIed5goBfdtIk81L955tSx-zyChioCHT2VzkdBg
+// v2 dev: 1-ZFmyF-Iz7wyzdMLGEI9IjBbxL9l_FSFG8ogqWLVJc8
+            spreadsheetId: '1-ZFmyF-Iz7wyzdMLGEI9IjBbxL9l_FSFG8ogqWLVJc8',
             range: `A1:${toLetters(columns.length+100)}${userList.length + 1}`,
             resource: {values}
         }, function (err, response) {
