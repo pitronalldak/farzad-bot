@@ -121,7 +121,7 @@ bot.on('message', msg => {
                                         bot.sendMessage(chatId, responseQuestion.question, opts)
                                     }
                                 } else {
-                                    bot.sendMessage(chatId, 'سپاس!');
+                                    bot.sendMessage(chatId, 'Thank you!');
                                 }
                             })
                     })
