@@ -206,7 +206,7 @@ bot.on('callback_query', callbackQuery => {
                                         bot.sendMessage(chatId, responseQuestion.question, opts)
                                     }
                                 } else {
-                                    bot.sendMessage(chatId, 'سپاس!');
+                                    bot.sendMessage(chatId, 'Thank you!');
                                 }
                             })
                     })
