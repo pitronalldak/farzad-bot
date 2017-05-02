@@ -8,9 +8,10 @@ const { wrap: async } = require('co');
 
 const Question = mongoose.model('Question');
 const User = mongoose.model('User');
+const Survey = mongoose.model('Survey');
 const uuid = require('uuid/v4');
 
-exports.createQuestion = async(function* (text, ownAnswer) {
+exports.createQuestion = async(function* (survey, text, ownAnswer) {
     const data = {};
     let preData = text.split('{');
     data.question = preData[0];
@@ -21,51 +22,89 @@ exports.createQuestion = async(function* (text, ownAnswer) {
         preData = [];
     }
     data.id = uuid.v4();
+    data.survey = survey;
     data.answers = [];
 
     if (ownAnswer) data.ownAnswer = {text: ownAnswer, id: 0};
     preData.forEach((a, key) => data.answers.push({id: key + 1, text: a}));
     const question = new Question(data);
 
-    this.getUsers()
-        .then((users) => {
-            for (let user of users) {
-                user.answers.push({"answer":"","questionId": data.id,"question": data.question});
-                user.save();
-            }
-        });
-
     try {
         yield question.save();
     } catch (err) {
-
         const errors = Object.keys(err.errors)
             .map(field => err.errors[field].message);
-
+        console.log(errors);
     }
+});
+
+exports.createSurvey = async(function* (name, thankYou) {
+  const data = {};
+  data.id = uuid.v4();
+  data.name = name;
+  data.thankYou = thankYou;
+
+  const survey = new Survey(data);
+
+  try {
+    yield survey.save();
+  } catch (err) {
+    const errors = Object.keys(err.errors)
+        .map(field => err.errors[field].message);
+    console.log(errors);
+  }
+});
+
+exports.initializeUserAnswers = async(function* (surveyName, telegramId) {
+	this.getQuestions()
+		.then(questions => {
+			this.getUser(telegramId)
+				.then((user) => {
+			        let questionsFiltered = questions.filter(q => q.survey === surveyName);
+					user.answers = [];
+                    user.survey = surveyName;
+                    questionsFiltered.map(q => {
+                        user.answers.push({"answer":"","questionId": q.id,"question": q.question});
+                    });
+					return user.save();
+				})
+		})
 });
 
 exports.getQuestions = async(function* () {
     return Question.list();
 });
 
+exports.getSurveys = async(function* () {
+  return Survey.list();
+});
+
 exports.getUsers = async(function* () {
     return User.list();
 });
 
-exports.removeQuestions = async(function* () {
+exports.removeSurvey = async(function* (name) {
     Question.list()
         .then(questions => {
-            questions.map((question) => {
-                question.question = 'deleted';
-                return question.save();
-            });
+	        Survey.list()
+		        .then(surveys => {
+			        const deletingSurvey = surveys.find(survey => survey.name = name);
+			        Survey.removeSurveyByName(deletingSurvey)
+				        .then(() => {
+                            questions.map((question) => {
+                                if (question.survey === survey) {
+                                    question.question = 'deleted';
+                                }
+                                return question.save();
+                            });
+				        });
+                });
         });
 });
 
 exports.findAndDeleteTheQuestion = async(function* (question) {
     return Question.getQuestionByName(question)
-        .then(( thequestion ) => {
+        .then(thequestion => {
             if (thequestion) {
                 thequestion.question = 'deleted';
                 return thequestion.save();
@@ -74,10 +113,6 @@ exports.findAndDeleteTheQuestion = async(function* (question) {
             }
         });
 });
-
-// exports.removeTheQuestion = async(function* (question) {
-//     Question.removeQuestionByName(question);
-// });
 
 exports.getUser = async(function* (telegramId) {
     return User.getUserById(telegramId);
@@ -99,11 +134,11 @@ exports.createUser = async(function* (data) {
                     if (user) {
                         user.answers = [];
                         user.date = moment().format('YYYY-MM-DDTHH:mm:ssZ');
-                        questions.forEach(q => user.answers.push({question: q.question, questionId: q.id}));
+                        // questions.forEach(q => user.answers.push({question: q.question, questionId: q.id}));
                         user.chatId = userData.chatId;
                         return user.save();
                     } else {
-                        questions.forEach(q => userData.answers.push({question: q.question, questionId: q.id}));
+                        // questions.forEach(q => userData.answers.push({question: q.question, questionId: q.id}));
                         const newUser = new User(userData);
                         return newUser.save();
                     }
