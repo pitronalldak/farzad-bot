@@ -1,6 +1,5 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const moment = require('moment');
 const app = express();
 const { postSpreadSheets } = require('./messages/bot_app/google-spreadsheets');
 
@@ -48,7 +47,7 @@ bot.onText(/info (.+)/, function (msg, match) {
     const password = match[1];
     const chatId = msg.chat.id;
     if (password === PASSWORD) {
-        const text = '- start - Start your interview \n \n' +
+        const text = '- start - Start your interview. \n \n' +
             '- add_survey: password|name|thankyou - Create new survey.\n \n' +
             '- add_question: password|survey|question{answer/answer/answer} - Create new question with options in the survey.\n \n' +
             '- add_question: password|survey|question - Create new question without input answer in the survey.\n \n' +
@@ -490,35 +489,11 @@ bot.onText(/google (.+)/, function (msg, match) {
             .then((questions) => {
                 action.getUsers()
                     .then((users) => {
-                        let userList = [];
-                        let columns = [];
-                        for (let user of users) {
-                            let juser = [];
-                            juser.push(user.telegramId);
-                            juser.push(user.date);
-                            juser.push(user.username);
-                            for (let answer of user.answers) {
-                                let answ = '';
-                                if (answer.answerId) {answ = answer.answerId} else {answ = answer.answer};
-                                juser.push(answ);
-                            }
-                            userList.push(juser);
-                            userList.sort(function (a, b) {
-                                if (moment().diff(a[1]) > moment().diff(b[1])) {
-                                    return -1;
-                                }
-                                if (moment().diff(a[1]) < moment().diff(b[1])) {
-                                    return 1;
-                                }
-                            })
-                        }
-                        columns.push('telegramId', 'date','Username');
-                        for (let a of questions) {
-                            columns.push(a.question);
-                        }
-                        columns.push('total number of questions - ' + String(questions.length),'total number of users - ' + String(users.length))
-                        postSpreadSheets(userList, columns);
-                        bot.sendMessage(chatId, `Migration complete!`)
+	                    action.getSurveys()
+		                    .then((surveys) => {
+		                        postSpreadSheets(questions, users, surveys);
+		                        bot.sendMessage(chatId, `Migration complete!`)
+		                    });
                     });
             });
     } else {
