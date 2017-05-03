@@ -3,6 +3,11 @@ const readline = require('readline');
 const google = require('googleapis');
 const googleAuth = require('google-auth-library');
 const moment = require('moment');
+// test: 15xQEWvKK88W4eALxThmtHIzsdPXFqfYHir8QvjH8Jq0
+// origin: 1LOUGqVKIm-crpOjIgTPUY7QlY6ubaSyclRZjqsGUx2U
+// dev: 1TAidjIed5goBfdtIk81L955tSx-zyChioCHT2VzkdBg
+// v2 dev: 1-ZFmyF-Iz7wyzdMLGEI9IjBbxL9l_FSFG8ogqWLVJc8
+const spreadsheet = '1TAidjIed5goBfdtIk81L955tSx-zyChioCHT2VzkdBg';
 
 // If modifying these scopes, delete your previously saved credentials
 // at ~/.credentials/sheets.googleapis.com-nodejs-quickstart.json
@@ -115,7 +120,7 @@ const listMajors = (questions, users, surveys) => (
     (auth) => {
         const sheets = google.sheets('v4');
         sheets.spreadsheets.get({
-	        spreadsheetId: '15xQEWvKK88W4eALxThmtHIzsdPXFqfYHir8QvjH8Jq0',
+	        spreadsheetId: spreadsheet,
 	        includeGridData: true,
 	        auth: auth,
         }, function(err, receivedSpreadsheet) {
@@ -126,7 +131,7 @@ const listMajors = (questions, users, surveys) => (
 	        surveys.forEach(survey => {
 		        if (!receivedSpreadsheet.sheets.some(sheet => sheet.properties.title === survey.name)) {
 			        sheets.spreadsheets.batchUpdate({
-				        spreadsheetId: '15xQEWvKK88W4eALxThmtHIzsdPXFqfYHir8QvjH8Jq0',
+				        spreadsheetId: spreadsheet,
 				        resource: {
 					        requests: [{
 						        addSheet: {
@@ -225,7 +230,7 @@ const listMajors = (questions, users, surveys) => (
 			        }
 		        });
 		        sheets.spreadsheets.get({
-			        spreadsheetId: '15xQEWvKK88W4eALxThmtHIzsdPXFqfYHir8QvjH8Jq0',
+			        spreadsheetId: spreadsheet,
 			        includeGridData: true,
 			        auth: auth,
 		        }, function(err, receivedSpreadsheet) {
@@ -239,11 +244,7 @@ const listMajors = (questions, users, surveys) => (
 			        }];
 			        userList.forEach(user => values.push(user));
 			        sheets.spreadsheets.batchUpdate({
-	// test: 15xQEWvKK88W4eALxThmtHIzsdPXFqfYHir8QvjH8Jq0
-	// origin: 1LOUGqVKIm-crpOjIgTPUY7QlY6ubaSyclRZjqsGUx2U
-	// dev: 1TAidjIed5goBfdtIk81L955tSx-zyChioCHT2VzkdBg
-	// v2 dev: 1-ZFmyF-Iz7wyzdMLGEI9IjBbxL9l_FSFG8ogqWLVJc8
-				        spreadsheetId: '1TAidjIed5goBfdtIk81L955tSx-zyChioCHT2VzkdBg',
+				        spreadsheetId: spreadsheet,
 				        resource: {
 					        requests: [{
 						        updateCells: {
