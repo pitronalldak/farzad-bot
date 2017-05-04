@@ -438,9 +438,7 @@ bot.onText(/send (.+)/, function (msg, match) {
 		                    .then((surveys) => {
 	                    	    let j;
 			                    const sendInterval = setInterval(function(){
-				                    if (j === undefined) {
-				                        j = 0;
-				                    }
+				                    if (j === undefined) j = 0;
 				                    let user = unfinishedUsers[j];
 				                    console.log(j);
 				                    const thankYou = surveys.find((survey) => survey.name === user.survey).thankYou;
