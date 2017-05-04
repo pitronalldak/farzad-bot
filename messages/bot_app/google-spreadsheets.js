@@ -116,6 +116,127 @@ function toLetters(num) {
 /**
  * Print the data in a spreadsheet:
  */
+function writeDataToSheets(users, questions, survey) {
+	let userList = [];
+	let columns = [];
+	let userQuantity = 0;
+	let questionQuantity = 0;
+	for (let user of users) {
+		if (user.survey === survey.name) {
+			userQuantity++;
+			let juser = [];
+			juser.push({
+				userEnteredValue: {
+					stringValue: user.telegramId,
+				}
+			});
+			juser.push({
+				userEnteredValue: {
+					stringValue: user.date,
+				}
+			});
+			juser.push({
+				userEnteredValue: {
+					stringValue: user.username,
+				}
+			});
+			for (let answer of user.answers) {
+				let answ = '';
+				if (answer.answerId) {answ = answer.answerId} else {answ = answer.answer}
+				juser.push({
+					userEnteredValue: {
+						stringValue: answ,
+					}
+				});
+			}
+			userList.push({
+				values: juser
+			});
+		}
+	}
+	userList.sort(function (a, b) {
+		if (moment().diff(a.values[1].userEnteredValue.stringValue) > moment().diff(b.values[1].userEnteredValue.stringValue)) {
+			return -1;
+		}
+		if (moment().diff(a.values[1].userEnteredValue.stringValue) < moment().diff(b.values[1].userEnteredValue.stringValue)) {
+			return 1;
+		}
+	});
+	columns.push({
+			userEnteredValue: {
+				stringValue: 'telegramId',
+			}
+		},
+		{
+			userEnteredValue: {
+				stringValue: 'date',
+			}
+		},
+		{
+			userEnteredValue: {
+				stringValue: 'Username',
+			}
+		});
+	for (let q of questions) {
+		if (q.survey === survey.name) {
+			questionQuantity++;
+			columns.push({
+				userEnteredValue: {
+					stringValue: q.question,
+				}
+			});
+		}
+	}
+	columns.push({
+			userEnteredValue: {
+				stringValue: 'total number of questions - ' + questionQuantity,
+			}
+		},
+		{
+			userEnteredValue: {
+				stringValue: 'total number of users - ' + userQuantity,
+			}
+		});
+	sheets.spreadsheets.get({
+		spreadsheetId: spreadsheet,
+		includeGridData: true,
+		auth: auth,
+	}, function(err, receivedSpreadsheet) {
+		if (err) {
+			console.log(err);
+			return;
+		}
+		let sheetId = receivedSpreadsheet.sheets.find(sheet => sheet.properties.title === survey.name).properties.sheetId;
+		let values= [{
+			values: columns,
+		}];
+		userList.forEach(user => values.push(user));
+		sheets.spreadsheets.batchUpdate({
+			spreadsheetId: spreadsheet,
+			resource: {
+				requests: [{
+					updateCells: {
+						fields: '*',
+						start: {
+							sheetId: sheetId,
+							rowIndex: 0,
+							columnIndex: 0,
+						},
+						rows: values,
+					}
+				}],
+			},
+			auth: auth,
+		}, function (err, response) {
+			if (err) {
+				console.log('The API returned an error: ' + err);
+				return;
+			}
+			console.log(response);
+		});
+	});
+}
+
 const listMajors = (questions, users, surveys) => (
     (auth) => {
         const sheets = google.sheets('v4');
@@ -147,126 +268,11 @@ const listMajors = (questions, users, surveys) => (
 					        console.log(err);
 					        return;
 				        }
+				        writeDataToSheets(users, questions, survey);
 			        })
+		        } else {
+			        writeDataToSheets(users, questions, survey);
 		        }
-		        let userList = [];
-		        let columns = [];
-		        let userQuantity = 0;
-		        let questionQuantity = 0;
-		        for (let user of users) {
-		            if (user.survey === survey.name) {
-				        userQuantity++;
-				        let juser = [];
-				        juser.push({
-					        userEnteredValue: {
-						        stringValue: user.telegramId,
-					        }
-				        });
-				        juser.push({
-					        userEnteredValue: {
-						        stringValue: user.date,
-					        }
-				        });
-				        juser.push({
-					        userEnteredValue: {
-						        stringValue: user.username,
-					        }
-				        });
-				        for (let answer of user.answers) {
-					        let answ = '';
-					        if (answer.answerId) {answ = answer.answerId} else {answ = answer.answer}
-					        juser.push({
-						        userEnteredValue: {
-							        stringValue: answ,
-						        }
-					        });
-				        }
-				        userList.push({
-					        values: juser
-				        });
-	                }
-		        }
-		        userList.sort(function (a, b) {
-			        if (moment().diff(a.values[1].userEnteredValue.stringValue) > moment().diff(b.values[1].userEnteredValue.stringValue)) {
-				        return -1;
-			        }
-			        if (moment().diff(a.values[1].userEnteredValue.stringValue) < moment().diff(b.values[1].userEnteredValue.stringValue)) {
-				        return 1;
-			        }
-		        });
-		        columns.push({
-			        userEnteredValue: {
-				        stringValue: 'telegramId',
-			        }
-		        },
-		        {
-			        userEnteredValue: {
-				        stringValue: 'date',
-			        }
-		        },
-		        {
-			        userEnteredValue: {
-				        stringValue: 'Username',
-			        }
-		        });
-		        for (let q of questions) {
-			        if (q.survey === survey.name) {
-				        questionQuantity++;
-				        columns.push({
-					        userEnteredValue: {
-						        stringValue: q.question,
-					        }
-				        });
-			        }
-		        }
-		        columns.push({
-			        userEnteredValue: {
-				        stringValue: 'total number of questions - ' + questionQuantity,
-			        }
-		        },
-		        {
-			        userEnteredValue: {
-				        stringValue: 'total number of users - ' + userQuantity,
-			        }
-		        });
-		        sheets.spreadsheets.get({
-			        spreadsheetId: spreadsheet,
-			        includeGridData: true,
-			        auth: auth,
-		        }, function(err, receivedSpreadsheet) {
-			        if (err) {
-				        console.log(err);
-				        return;
-			        }
-			        let sheetId = receivedSpreadsheet.sheets.find(sheet => sheet.properties.title === survey.name).properties.sheetId;
-			        let values= [{
-	                    values: columns,
-			        }];
-			        userList.forEach(user => values.push(user));
-			        sheets.spreadsheets.batchUpdate({
-				        spreadsheetId: spreadsheet,
-				        resource: {
-					        requests: [{
-						        updateCells: {
-							        fields: '*',
-							        start: {
-								        sheetId: sheetId,
-								        rowIndex: 0,
-								        columnIndex: 0,
-						            },
-							        rows: values,
-						        }
-					        }],
-				        },
-				        auth: auth,
-			        }, function (err, response) {
-				        if (err) {
-					        console.log('The API returned an error: ' + err);
-					        return;
-				        }
-				        console.log(response);
-			        });
-                });
 	        });
         });
     }
