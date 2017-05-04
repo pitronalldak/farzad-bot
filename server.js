@@ -19,8 +19,8 @@ connect()
 
 function connect () {
     const options = { server: { socketOptions: { keepAlive: 1 } } };
-    return mongoose.connect('mongodb://bot:Matwey12@ds145019.mlab.com:45019/heroku_zlrrx207').connection;
-    // return mongoose.connect('mongodb://bot:bot@127.0.0.1:27017/bot').connection;
+    // return mongoose.connect('mongodb://bot:Matwey12@ds145019.mlab.com:45019/heroku_zlrrx207').connection;
+    return mongoose.connect('mongodb://bot:bot@127.0.0.1:27017/bot').connection;
 }
 
 function listen () {
@@ -36,7 +36,7 @@ const TelegramBot = require('node-telegram-bot-api');
 // origin: 350720484:AAEgITsnyA0ZIFgQ46ivEq7Sp2VTrt4YDUg
 // dev: 329116244:AAHDzSnwr49C2PIe4OES2HJgrZTB0QLqc_w
 // v2 dev: 360889127:AAEPjHX8IDZ3jaG4x-ATVwFxSymVfQ2ENmk
-const token = '330486268:AAEEi7yURFX0EZQRE7EhylamB1-WaJi5ljg';
+const token = '329116244:AAHDzSnwr49C2PIe4OES2HJgrZTB0QLqc_w';
 
 // Create a bot that uses 'polling' to fetch new updates
 const bot = new TelegramBot(token, {polling: true});
@@ -436,49 +436,57 @@ bot.onText(/send (.+)/, function (msg, match) {
                     .then((questions) => {
 	                    action.getSurveys()
 		                    .then((surveys) => {
-		                        for (let user of unfinishedUsers) {
-			                        const thankYou = surveys.find((survey) => survey.name === user.survey).thankYou;
-		                            let filter_answers = user.answers.filter(answer => !answer.answer);
-		                            let i = 0;
-		                            for (i; i < filter_answers.length; i++) {
-		                                let questionitself = questions.find(question => question.id === filter_answers[i].questionId);
-		                                if (questionitself.question !== 'deleted') break
-		                            }
-		                            let qid = filter_answers[i].questionId;
-		                            const reply_markup = {
-		                                inline_keyboard: []
-		                            };
-		                            let nextQuestion = (questions.find(question => question.id === qid));
-		                            if (nextQuestion.answers.length) {
-		                                nextQuestion.answers.forEach(answer => {
-		                                    reply_markup.inline_keyboard.push([{
-		                                        text: answer.text,
-		                                        callback_data: `false|${thankYou}|${nextQuestion.id}|${answer.id}`,
-		                                        resize_keyboard: true
-		                                    }]);
-		                                });
-		                                if (nextQuestion.ownAnswer.text) {
-		                                    reply_markup.inline_keyboard.push([{
-		                                        text: nextQuestion.ownAnswer.text,
-		                                        callback_data: `false|${thankYou}|${nextQuestion.id}|${nextQuestion.ownAnswer.id}|true`,
-		                                        resize_keyboard: true
-		                                    }]);
-		                                }
-		                                const opts = {
-		                                    "parse_mode": "Markdown",
-		                                    "reply_markup": JSON.stringify(reply_markup)
-		                                };
+	                    	    let j;
+			                    const sendInterval = setInterval(function(){
+				                    if (j === undefined) {
+				                        j = 0;
+				                    }
+				                    let user = unfinishedUsers[j];
+				                    console.log(j);
+				                    const thankYou = surveys.find((survey) => survey.name === user.survey).thankYou;
+				                    let filter_answers = user.answers.filter(answer => !answer.answer);
+				                    let i = 0;
+				                    for (i; i < filter_answers.length; i++) {
+					                    let questionitself = questions.find(question => question.id === filter_answers[i].questionId);
+					                    if (questionitself.question !== 'deleted') break
+				                    }
+				                    let qid = filter_answers[i].questionId;
+				                    const reply_markup = {
+					                    inline_keyboard: []
+				                    };
+				                    let nextQuestion = (questions.find(question => question.id === qid));
+				                    if (nextQuestion.answers.length) {
+					                    nextQuestion.answers.forEach(answer => {
+						                    reply_markup.inline_keyboard.push([{
+							                    text: answer.text,
+							                    callback_data: `false|${thankYou}|${nextQuestion.id}|${answer.id}`,
+							                    resize_keyboard: true
+						                    }]);
+					                    });
+					                    if (nextQuestion.ownAnswer.text) {
+						                    reply_markup.inline_keyboard.push([{
+							                    text: nextQuestion.ownAnswer.text,
+							                    callback_data: `false|${thankYou}|${nextQuestion.id}|${nextQuestion.ownAnswer.id}|true`,
+							                    resize_keyboard: true
+						                    }]);
+					                    }
+					                    const opts = {
+						                    "parse_mode": "Markdown",
+						                    "reply_markup": JSON.stringify(reply_markup)
+					                    };
 
-			                            bot.sendMessage(user.chatId, nextQuestion.question, opts);
-		                            } else {
-		                                const opts = {
-		                                    reply_markup: {
-		                                        force_reply: true,
-		                                    }
-		                                };
-		                                bot.sendMessage(user.chatId, nextQuestion.question, opts);
-		                            }
-		                        }
+					                    bot.sendMessage(user.chatId, nextQuestion.question, opts);
+				                    } else {
+					                    const opts = {
+						                    reply_markup: {
+							                    force_reply: true,
+						                    }
+					                    };
+					                    bot.sendMessage(user.chatId, nextQuestion.question, opts);
+				                    }
+				                    j++;
+				                    if (j === unfinishedUsers.length) clearInterval(sendInterval);
+			                    }, 50);
                             });
                     });
                 bot.sendMessage(chatId, `Sent successfully!`);
