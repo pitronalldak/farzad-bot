@@ -5,7 +5,6 @@
 const mongoose = require('mongoose');
 const moment = require('moment');
 const { wrap: async } = require('co');
-
 const Question = mongoose.model('Question');
 const User = mongoose.model('User');
 const Survey = mongoose.model('Survey');
@@ -15,7 +14,6 @@ exports.createQuestion = async(function* (survey, text, ownAnswer) {
     const data = {};
     let preData = text.split('{');
     data.question = preData[0];
-
     if (preData[1]) {
         preData = preData[1].split('}')[0].split('/');
     } else {
@@ -24,11 +22,9 @@ exports.createQuestion = async(function* (survey, text, ownAnswer) {
     data.id = uuid.v4();
     data.survey = survey;
     data.answers = [];
-
     if (ownAnswer) data.ownAnswer = {text: ownAnswer, id: 0};
     preData.forEach((a, key) => data.answers.push({id: key + 1, text: a}));
     const question = new Question(data);
-
     try {
         yield question.save();
     } catch (err) {
@@ -39,20 +35,37 @@ exports.createQuestion = async(function* (survey, text, ownAnswer) {
 });
 
 exports.createSurvey = async(function* (name, thankYou) {
-  const data = {};
-  data.id = uuid.v4();
-  data.name = name;
-  data.thankYou = thankYou;
-
-  const survey = new Survey(data);
-
-  try {
+    const data = {};
+    data.id = uuid.v4();
+    data.name = name;
+    data.thankYou = thankYou;
+    const survey = new Survey(data);
+    try {
     yield survey.save();
-  } catch (err) {
+    } catch (err) {
     const errors = Object.keys(err.errors)
         .map(field => err.errors[field].message);
     console.log(errors);
-  }
+    }
+});
+
+exports.initializeAddedQuestionUserAnswers = async(function* (surveyName) {
+	this.getQuestions()
+		.then(questions => {
+			this.getUsers()
+				.then(users => {
+					users.forEach(user => {
+					    if (user.survey === surveyName) {
+						    questions.forEach(q => {
+							    if (!user.answers.some(answer => answer.questionId === q.id)) {
+							        user.answers.push({"answer":"","questionId": q.id,"question": q.question});
+								    return user.save();
+							    }
+						    })
+                        }
+                    })
+		        })
+		})
 });
 
 exports.initializeUserAnswers = async(function* (surveyName, telegramId) {
@@ -76,7 +89,7 @@ exports.getQuestions = async(function* () {
 });
 
 exports.getSurveys = async(function* () {
-  return Survey.list();
+    return Survey.list();
 });
 
 exports.getUsers = async(function* () {
@@ -147,7 +160,6 @@ exports.createUser = async(function* (data) {
 });
 
 exports.putAnswer = async(function* (telegramId, question, answer, answerId) {
-
     User.getUserById(telegramId)
         .then(user => {
             user.answers.find(a => a.question === question).answer = answer;
