@@ -32,7 +32,7 @@ function listen () {
 const TelegramBot = require('node-telegram-bot-api');
 
 // replace the value below with the Telegram token you receive from @BotFather
-const token = '350720484:AAEgITsnyA0ZIFgQ46ivEq7Sp2VTrt4YDUg'; //test: 330486268:AAEEi7yURFX0EZQRE7EhylamB1-WaJi5ljg origin: 350720484:AAEgITsnyA0ZIFgQ46ivEq7Sp2VTrt4YDUg
+const token = '360889127:AAEPjHX8IDZ3jaG4x-ATVwFxSymVfQ2ENmk'; //test: 330486268:AAEEi7yURFX0EZQRE7EhylamB1-WaJi5ljg origin: 350720484:AAEgITsnyA0ZIFgQ46ivEq7Sp2VTrt4YDUg
 
 // Create a bot that uses 'polling' to fetch new updates
 
