@@ -116,13 +116,13 @@ function toLetters(num) {
 /**
  * Print the data in a spreadsheet:
  */
-function writeDataToSheets(users, questions, survey) {
+function writeDataToSheets(auth, sheets, users, questions, survey) {
 	let userList = [];
 	let columns = [];
 	let userQuantity = 0;
 	let questionQuantity = 0;
 	for (let user of users) {
-		if (user.survey === survey.name) {
+		if (user.survey === survey.id) {
 			userQuantity++;
 			let juser = [];
 			juser.push({
@@ -178,7 +178,7 @@ function writeDataToSheets(users, questions, survey) {
 			}
 		});
 	for (let q of questions) {
-		if (q.survey === survey.name) {
+		if (q.survey === survey.id) {
 			questionQuantity++;
 			columns.push({
 				userEnteredValue: {
@@ -268,10 +268,10 @@ const listMajors = (questions, users, surveys) => (
 					        console.log(err);
 					        return;
 				        }
-				        writeDataToSheets(users, questions, survey);
+				        writeDataToSheets(auth, sheets, users, questions, survey);
 			        })
 		        } else {
-			        writeDataToSheets(users, questions, survey);
+			        writeDataToSheets(auth, sheets, users, questions, survey);
 		        }
 	        });
         });

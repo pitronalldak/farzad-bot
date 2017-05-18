@@ -7,18 +7,22 @@ var ObjectId = mongoose.Types.ObjectId;
 const SurveySchema = new Schema({
     id: { type: String, default: '' },
     name: { type : String, default : '' },
-    thankYou: { type : String, default : '' }
+    thankYou: { type : String, default : '' },
+	isActive: { type : Boolean, default : true }
 });
 
 const QuestionSchema = new Schema({
     id: { type: String, default: '' },
+	index: { type: Number },
     survey: { type : String },
     question: { type : String, default : ''},
+	type: { type : String, default : '' },
     answers: { type : [] },
     ownAnswer: {
         id: { type: String, default: '' },
-        text: { type: String, default: '' }
-    }
+        text: { type: String, default: '' },
+    },
+	isDeleted: { type : Boolean, default : false }
 });
 
 const UserSchema = new Schema({
@@ -31,7 +35,7 @@ const UserSchema = new Schema({
         answerId: { type: String, default: '' },
         question: { type: String, default: '' },
         questionId: { type: String, default: '' },
-        answer: { type: String, default: '' }
+        answer: { type: String, default: '' },
     }]
 });
 
@@ -66,7 +70,7 @@ QuestionSchema.statics = {
         return (this.findOne({question}));
     },
     list: function (options) {
-        return this.find()
+        return this.find().sort({ "index": 1 })
             .exec();
     }
 };

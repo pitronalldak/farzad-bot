@@ -5,7 +5,7 @@ const { postSpreadSheets } = require('./messages/bot_app/google-spreadsheets');
 
 require("./messages/bot_app/models");
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 
 const action = require('./messages/bot_app/actions');
 
@@ -19,8 +19,8 @@ connect()
 
 function connect () {
     const options = { server: { socketOptions: { keepAlive: 1 } } };
-    // return mongoose.connect('mongodb://bot:Matwey12@ds145019.mlab.com:45019/heroku_zlrrx207').connection;
-    return mongoose.connect('mongodb://bot:bot@127.0.0.1:27017/bot').connection;
+    return mongoose.connect('mongodb://bot:Matwey12@ds145019.mlab.com:45019/heroku_zlrrx207').connection;
+    // return mongoose.connect('mongodb://bot:bot@127.0.0.1:27017/bot').connection;
 }
 
 function listen () {
@@ -36,7 +36,7 @@ const TelegramBot = require('node-telegram-bot-api');
 // origin: 350720484:AAEgITsnyA0ZIFgQ46ivEq7Sp2VTrt4YDUg
 // dev: 329116244:AAHDzSnwr49C2PIe4OES2HJgrZTB0QLqc_w
 // v2 dev: 360889127:AAEPjHX8IDZ3jaG4x-ATVwFxSymVfQ2ENmk
-const token = '329116244:AAHDzSnwr49C2PIe4OES2HJgrZTB0QLqc_w';
+const token = '330486268:AAEEi7yURFX0EZQRE7EhylamB1-WaJi5ljg';
 
 // Create a bot that uses 'polling' to fetch new updates
 const bot = new TelegramBot(token, {polling: true});
@@ -52,7 +52,7 @@ bot.onText(/info (.+)/, function (msg, match) {
             '- add_question: password|survey|question - Create new question without input answer in the survey.\n \n' +
             '- add_question: password|survey|question{answer/answer/answer}|own custom variant - Create new question with options and input answer in the survey.\n \n' +
             '- remove_survey: password|name - Remove all questions in the survey and the survey itself.\n \n' +
-            '- remove_question_by_name: password|question - Remove the question with typed name from the interview.\n \n' +
+            // '- remove_question_by_name: password|question - Remove the question with typed name from the interview.\n \n' +
             '- info password - Get commands list.\n \n' +
             '- google password - Download database to google spreadsheet.\n \n' +
             '- send password - Send all unanswered questions and added afterwards to all users have ever participated.';
@@ -78,7 +78,7 @@ bot.on('message', msg => {
 	                            action.getSurveys()
 		                            .then((surveys) => {
 		                                const chatId = msg.chat.id;
-		                                const thankYou = surveys.find((survey) => survey.name === user.survey).thankYou;
+		                                const thankYou = surveys.find((survey) => survey.id === user.survey).thankYou;
 		                                const opts = {
 		                                    reply_markup: {
 		                                        inline_keyboard: []
@@ -88,7 +88,7 @@ bot.on('message', msg => {
 		                                let isNext = false;
 		                                for (let item of user.answers) {
 		                                    let nextQuestion = questions.find(q => q.id == item.questionId);
-		                                    if (!item.answer && item.question !== question && nextQuestion.question !== 'deleted') {
+		                                    if (!item.answer && item.question !== question && nextQuestion.isDeleted !== true) {
 		                                        responseQuestion = nextQuestion;
 		                                        isNext = true;
 		                                        break
@@ -137,13 +137,13 @@ bot.on('callback_query', callbackQuery => {
     const callback_data = callbackQuery.data.split('|');
 	const chatId = message.chat.id;
     const isFirst = callback_data[0];
-	let surveyName;
+	let surveyId;
 	let questionId;
 	let answerId;
 	let isOwnAnswer;
 	let thankYou;
     if (isFirst === 'true') {
-	    surveyName = callback_data[1];
+	    surveyId = callback_data[1];
 	    thankYou = callback_data[2];
     } else {
 	    thankYou = callback_data[1];
@@ -157,9 +157,9 @@ bot.on('callback_query', callbackQuery => {
 		        .then((user) => {
                     let questionsFiltered;
                     if (isFirst  === 'true') {
-                        action.initializeUserAnswers(surveyName, telegramId)
+                        action.initializeUserAnswers(surveyId, telegramId)
                             .then(() => {
-                                questionsFiltered = questions.filter(q => q.survey === surveyName);
+                                questionsFiltered = questions.filter(q => q.survey === surveyId);
                                 const opts = {
                                     reply_markup: {
                                         inline_keyboard: []
@@ -168,7 +168,7 @@ bot.on('callback_query', callbackQuery => {
                                 let responseQuestion;
                                 let questionExist = false;
                                 for (let question of questions) {
-                                    if (question.question !== 'deleted' && question.survey === surveyName)  {
+                                    if (question.isDeleted !== true && question.survey === surveyId)  {
                                         responseQuestion = question;
                                         questionExist = true;
                                         break
@@ -203,7 +203,6 @@ bot.on('callback_query', callbackQuery => {
                                 } else {
                                     bot.sendMessage(chatId, 'Sorry, no questions in the survey...');
                                 }
-
                             })
                     } else {
 	                    const question = questions.find(q => q.id == questionId).question;
@@ -228,7 +227,7 @@ bot.on('callback_query', callbackQuery => {
 				                    let isNext = false;
 				                    for (let item of user.answers) {
 					                    let nextQuestion = questions.find(q => q.id == item.questionId);
-					                    if (!item.answer && item.question !== question && nextQuestion.question !== 'deleted') {
+					                    if (!item.answer && item.question !== question && nextQuestion.isDeleted !== true) {
 						                    responseQuestion = nextQuestion;
 						                    isNext = true;
 						                    break
@@ -286,7 +285,7 @@ bot.onText(/start/, function (msg, match) {
 						surveys.forEach(survey => {
 							reply_markup.inline_keyboard.push([{
 								text: survey.name,
-								callback_data: `true|${survey.name}|${survey.thankYou}`,
+								callback_data: `true|${survey.id}|${survey.thankYou}`,
 								resize_keyboard: true
 							}]);
 						});
@@ -341,15 +340,20 @@ bot.onText(/add_question: (.+)/, function (msg, match) {
     const ownAnswer = data[3];
     const chatId = msg.chat.id;
     let stopAdding = false;
+    let questionsQuantity;
     let stopMessage = '';
+	let surveyId = '';
     action.getSurveys()
 	    .then((surveys) => {
             if (!surveys.some(s => s.name === survey)) {
                 stopAdding = true;
                 stopMessage = `This survey didn't find!`;
+            } else {
+	            surveyId = surveys.find(s => s.name === survey).id;
             }
 		    action.getQuestions()
 			    .then((questions) => {
+				    questionsQuantity = questions.length;
 				    for (let q of questions) {
 					    if (q.question == questionitself) {
 						    stopAdding = true;
@@ -360,7 +364,7 @@ bot.onText(/add_question: (.+)/, function (msg, match) {
 					    bot.sendMessage(chatId, stopMessage);
 				    } else {
 					    if (password === PASSWORD) {
-						    action.createQuestion(survey, question, ownAnswer)
+						    action.createQuestion(surveyId, question, ownAnswer, questionsQuantity)
 							    .then(() => {
 								    action.initializeAddedQuestionUserAnswers(survey)
 									    .then(() => {
@@ -394,23 +398,23 @@ bot.onText(/remove_survey: (.+)/, function (msg, match) {
 });
 
 // Remove the question from the db (questions), in db users the question will be 'deleted'
-bot.onText(/remove_question_by_name: (.+)/, function (msg, match) {
-    const data = match[1].split('|');
-    const password = data[0];
-    const question = data[1];
-    const chatId = msg.chat.id;
-    if (password === PASSWORD) {
-        action.findAndDeleteTheQuestion(question)
-            .then(() => {
-                bot.sendMessage(chatId, `The question was removed!`);
-            })
-            .catch(error => {
-                bot.sendMessage(chatId, error);
-            })
-    } else {
-        bot.sendMessage(chatId, `Wrong password!`)
-    }
-});
+// bot.onText(/remove_question_by_name: (.+)/, function (msg, match) {
+//     const data = match[1].split('|');
+//     const password = data[0];
+//     const question = data[1];
+//     const chatId = msg.chat.id;
+//     if (password === PASSWORD) {
+//         action.findAndDeleteTheQuestion(question)
+//             .then(() => {
+//                 bot.sendMessage(chatId, `The question was removed!`);
+//             })
+//             .catch(error => {
+//                 bot.sendMessage(chatId, error);
+//             })
+//     } else {
+//         bot.sendMessage(chatId, `Wrong password!`)
+//     }
+// });
 
 //Send all unanswered questions and added afterwards to all users have ever participated, looks for users, who has unanswered question,
 // takes them, checks survey in them and sends first unanswered question, excerpt 'deleted'
@@ -432,62 +436,66 @@ bot.onText(/send (.+)/, function (msg, match) {
                         unfinishedUsers.push(user);
                     }
                 }
-                action.getQuestions()
-                    .then((questions) => {
-	                    action.getSurveys()
-		                    .then((surveys) => {
-	                    	    let j;
-			                    const sendInterval = setInterval(function(){
-				                    if (j === undefined) j = 0;
-				                    let user = unfinishedUsers[j];
-				                    console.log(j);
-				                    const thankYou = surveys.find((survey) => survey.name === user.survey).thankYou;
-				                    let filter_answers = user.answers.filter(answer => !answer.answer);
-				                    let i = 0;
-				                    for (i; i < filter_answers.length; i++) {
-					                    let questionitself = questions.find(question => question.id === filter_answers[i].questionId);
-					                    if (questionitself.question !== 'deleted') break
-				                    }
-				                    let qid = filter_answers[i].questionId;
-				                    const reply_markup = {
-					                    inline_keyboard: []
-				                    };
-				                    let nextQuestion = (questions.find(question => question.id === qid));
-				                    if (nextQuestion.answers.length) {
-					                    nextQuestion.answers.forEach(answer => {
-						                    reply_markup.inline_keyboard.push([{
-							                    text: answer.text,
-							                    callback_data: `false|${thankYou}|${nextQuestion.id}|${answer.id}`,
-							                    resize_keyboard: true
-						                    }]);
-					                    });
-					                    if (nextQuestion.ownAnswer.text) {
-						                    reply_markup.inline_keyboard.push([{
-							                    text: nextQuestion.ownAnswer.text,
-							                    callback_data: `false|${thankYou}|${nextQuestion.id}|${nextQuestion.ownAnswer.id}|true`,
-							                    resize_keyboard: true
-						                    }]);
-					                    }
-					                    const opts = {
-						                    "parse_mode": "Markdown",
-						                    "reply_markup": JSON.stringify(reply_markup)
-					                    };
+	            if (unfinishedUsers.length) {
+		            action.getQuestions()
+			            .then((questions) => {
+				            action.getSurveys()
+					            .then((surveys) => {
+						            let j;
+						            const sendInterval = setInterval(function () {
+							            if (j === undefined) j = 0;
+							            console.log(unfinishedUsers);
+							            let user = unfinishedUsers[j];
+							            const thankYou = surveys.find((survey) => survey.id === user.survey).thankYou;
+							            let filter_answers = user.answers.filter(answer => !answer.answer);
+							            let i = 0;
+							            for (i; i < filter_answers.length; i++) {
+								            let questionitself = questions.find(question => question.id === filter_answers[i].questionId);
+								            if (questionitself.isDeleted !== true) break
+							            }
+							            let qid = filter_answers[i].questionId;
+							            const reply_markup = {
+								            inline_keyboard: []
+							            };
+							            let nextQuestion = (questions.find(question => question.id === qid));
+							            if (nextQuestion.answers.length) {
+								            nextQuestion.answers.forEach(answer => {
+									            reply_markup.inline_keyboard.push([{
+										            text: answer.text,
+										            callback_data: `false|${thankYou}|${nextQuestion.id}|${answer.id}`,
+										            resize_keyboard: true
+									            }]);
+								            });
+								            if (nextQuestion.ownAnswer.text) {
+									            reply_markup.inline_keyboard.push([{
+										            text: nextQuestion.ownAnswer.text,
+										            callback_data: `false|${thankYou}|${nextQuestion.id}|${nextQuestion.ownAnswer.id}|true`,
+										            resize_keyboard: true
+									            }]);
+								            }
+								            const opts = {
+									            "parse_mode": "Markdown",
+									            "reply_markup": JSON.stringify(reply_markup)
+								            };
 
-					                    bot.sendMessage(user.chatId, nextQuestion.question, opts);
-				                    } else {
-					                    const opts = {
-						                    reply_markup: {
-							                    force_reply: true,
-						                    }
-					                    };
-					                    bot.sendMessage(user.chatId, nextQuestion.question, opts);
-				                    }
-				                    j++;
-				                    if (j === unfinishedUsers.length) clearInterval(sendInterval);
-			                    }, 50);
-                            });
-                    });
-                bot.sendMessage(chatId, `Sent successfully!`);
+								            bot.sendMessage(user.chatId, nextQuestion.question, opts);
+							            } else {
+								            const opts = {
+									            reply_markup: {
+										            force_reply: true,
+									            }
+								            };
+								            bot.sendMessage(user.chatId, nextQuestion.question, opts);
+							            }
+							            j++;
+							            if (j === unfinishedUsers.length) clearInterval(sendInterval);
+						            }, 50);
+					            });
+			            });
+		            bot.sendMessage(chatId, `Sent successfully!`);
+	            } else {
+		            bot.sendMessage(chatId, `No users with unanswered questions!`);
+	            }
             });
     } else {
         bot.sendMessage(chatId, `Wrong password!`)
