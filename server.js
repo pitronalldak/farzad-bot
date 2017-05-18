@@ -340,7 +340,7 @@ bot.onText(/add_question: (.+)/, function (msg, match) {
     const ownAnswer = data[3];
     const chatId = msg.chat.id;
     let stopAdding = false;
-    let questionsQuantity;
+    let questionsQuantity = 0;
     let stopMessage = '';
 	let surveyId = '';
     action.getSurveys()
@@ -353,8 +353,10 @@ bot.onText(/add_question: (.+)/, function (msg, match) {
             }
 		    action.getQuestions()
 			    .then((questions) => {
-				    questionsQuantity = questions.length;
 				    for (let q of questions) {
+				    	if (q.survey === surveyId) {
+						    questionsQuantity++;
+					    }
 					    if (q.question == questionitself) {
 						    stopAdding = true;
 						    stopMessage = `This question already exists!`;
