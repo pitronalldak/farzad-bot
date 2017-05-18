@@ -5,7 +5,7 @@ const { postSpreadSheets } = require('./messages/bot_app/google-spreadsheets');
 
 require("./messages/bot_app/models");
 
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3000;
 
 const action = require('./messages/bot_app/actions');
 
