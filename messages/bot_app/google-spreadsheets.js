@@ -2,6 +2,12 @@ const fs = require('fs');
 const readline = require('readline');
 const google = require('googleapis');
 const googleAuth = require('google-auth-library');
+const moment = require('moment');
+// test: 15xQEWvKK88W4eALxThmtHIzsdPXFqfYHir8QvjH8Jq0
+// origin: 1LOUGqVKIm-crpOjIgTPUY7QlY6ubaSyclRZjqsGUx2U
+// dev: 1TAidjIed5goBfdtIk81L955tSx-zyChioCHT2VzkdBg
+// v2 dev: 1-ZFmyF-Iz7wyzdMLGEI9IjBbxL9l_FSFG8ogqWLVJc8
+const spreadsheet = '1TAidjIed5goBfdtIk81L955tSx-zyChioCHT2VzkdBg';
 
 // If modifying these scopes, delete your previously saved credentials
 // at ~/.credentials/sheets.googleapis.com-nodejs-quickstart.json
@@ -11,14 +17,14 @@ const TOKEN_DIR = (process.env.HOME || process.env.HOMEPATH ||
 const TOKEN_PATH = TOKEN_DIR + 'sheets.googleapis.com-nodejs-quickstart.json';
 
 // Load client secrets from a local file.
-exports.postSpreadSheets = (userList, columns) =>  fs.readFile('client_secret.json', function processClientSecrets(err, content) {
+exports.postSpreadSheets = (questions, users, surveys) =>  fs.readFile('client_secret.json', function processClientSecrets(err, content) {
     if (err) {
         console.log('Error loading client secret file: ' + err);
         return;
     }
     // Authorize a client with the loaded credentials, then call the
     // Google Sheets API.
-    authorize(JSON.parse(content), listMajors(userList, columns));
+    authorize(JSON.parse(content), listMajors(questions, users, surveys));
 });
 
 /**
@@ -110,23 +116,167 @@ function toLetters(num) {
 /**
  * Print the data in a spreadsheet:
  */
-const listMajors = (userList, columns) => (
+function writeDataToSheets(auth, sheets, users, questions, survey) {
+	let userList = [];
+	let columns = [];
+	let userQuantity = 0;
+	let questionQuantity = 0;
+	for (let user of users) {
+		user.answers.sort((a, b) => {
+			return questions.find(q => q.id === a.questionId).index - questions.find(q => q.id === b.questionId).index
+		});
+		if (user.survey === survey.id) {
+			userQuantity++;
+			let juser = [];
+			juser.push({
+				userEnteredValue: {
+					stringValue: user.telegramId,
+				}
+			});
+			juser.push({
+				userEnteredValue: {
+					stringValue: user.date,
+				}
+			});
+			juser.push({
+				userEnteredValue: {
+					stringValue: user.username,
+				}
+			});
+			for (let answer of user.answers) {
+				let answ = '';
+				if (answer.answerId) {answ = answer.answerId} else {answ = answer.answer}
+				juser.push({
+					userEnteredValue: {
+						stringValue: answ,
+					}
+				});
+			}
+			userList.push({
+				values: juser
+			});
+		}
+	}
+	userList.sort(function (a, b) {
+		if (moment().diff(a.values[1].userEnteredValue.stringValue) > moment().diff(b.values[1].userEnteredValue.stringValue)) {
+			return -1;
+		}
+		if (moment().diff(a.values[1].userEnteredValue.stringValue) < moment().diff(b.values[1].userEnteredValue.stringValue)) {
+			return 1;
+		}
+	});
+	columns.push({
+			userEnteredValue: {
+				stringValue: 'telegramId',
+			}
+		},
+		{
+			userEnteredValue: {
+				stringValue: 'date',
+			}
+		},
+		{
+			userEnteredValue: {
+				stringValue: 'Username',
+			}
+		});
+	for (let q of questions) {
+		if (q.survey === survey.id) {
+			questionQuantity++;
+			columns.push({
+				userEnteredValue: {
+					stringValue: q.question,
+				}
+			});
+		}
+	}
+	columns.push({
+			userEnteredValue: {
+				stringValue: 'total number of questions - ' + questionQuantity,
+			}
+		},
+		{
+			userEnteredValue: {
+				stringValue: 'total number of users - ' + userQuantity,
+			}
+		});
+	sheets.spreadsheets.get({
+		spreadsheetId: spreadsheet,
+		includeGridData: true,
+		auth: auth,
+	}, function(err, receivedSpreadsheet) {
+		if (err) {
+			console.log(err);
+			return;
+		}
+		let sheetId = receivedSpreadsheet.sheets.find(sheet => sheet.properties.title === survey.name).properties.sheetId;
+		let values= [{
+			values: columns,
+		}];
+		userList.forEach(user => values.push(user));
+		sheets.spreadsheets.batchUpdate({
+			spreadsheetId: spreadsheet,
+			resource: {
+				requests: [{
+					updateCells: {
+						fields: '*',
+						start: {
+							sheetId: sheetId,
+							rowIndex: 0,
+							columnIndex: 0,
+						},
+						rows: values,
+					}
+				}],
+			},
+			auth: auth,
+		}, function (err, response) {
+			if (err) {
+				console.log('The API returned an error: ' + err);
+				return;
+			}
+			console.log(response);
+		});
+	});
+}
+
+const listMajors = (questions, users, surveys) => (
     (auth) => {
         const sheets = google.sheets('v4');
-        const values= [columns];
-        userList.forEach(user => values.push(user));
-        sheets.spreadsheets.values.update({
-            valueInputOption: 'USER_ENTERED',
-            auth: auth,
-            spreadsheetId: '15xQEWvKK88W4eALxThmtHIzsdPXFqfYHir8QvjH8Jq0', // test: 15xQEWvKK88W4eALxThmtHIzsdPXFqfYHir8QvjH8Jq0 origin: 1LOUGqVKIm-crpOjIgTPUY7QlY6ubaSyclRZjqsGUx2U
-            range: `A1:${toLetters(columns.length+100)}${userList.length + 1}`,
-            resource: {values}
-        }, function (err, response) {
+        sheets.spreadsheets.get({
+	        spreadsheetId: spreadsheet,
+	        includeGridData: true,
+	        auth: auth,
+        }, function(err, receivedSpreadsheet) {
             if (err) {
-                console.log('The API returned an error: ' + err);
+                console.log(err);
                 return;
             }
-            console.log(response);
+	        surveys.forEach(survey => {
+		        if (!receivedSpreadsheet.sheets.some(sheet => sheet.properties.title === survey.name)) {
+			        sheets.spreadsheets.batchUpdate({
+				        spreadsheetId: spreadsheet,
+				        resource: {
+					        requests: [{
+						        addSheet: {
+							        properties: {
+							            title: survey.name,
+						            },
+						        }
+					        }],
+				        },
+				        auth: auth,
+			        }, function(err, response) {
+				        if (err) {
+					        console.log(err);
+					        return;
+				        }
+				        writeDataToSheets(auth, sheets, users, questions, survey);
+			        })
+		        } else {
+			        writeDataToSheets(auth, sheets, users, questions, survey);
+		        }
+	        });
         });
     }
 );
