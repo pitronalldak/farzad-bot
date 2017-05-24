@@ -225,6 +225,9 @@ bot.on('callback_query', callbackQuery => {
 				                    };
 				                    let responseQuestion;
 				                    let isNext = false;
+				                    user.answers.sort((a, b) => {
+					                    return questions.find(q => q.id === a.questionId).index - questions.find(q => q.id === b.questionId).index
+				                    });
 				                    for (let item of user.answers) {
 					                    let nextQuestion = questions.find(q => q.id == item.questionId);
 					                    if (!item.answer && item.question !== question && nextQuestion.isDeleted !== true) {
@@ -447,6 +450,9 @@ bot.onText(/send (.+)/, function (msg, match) {
 						            const sendInterval = setInterval(function () {
 							            if (j === undefined) j = 0;
 							            let user = unfinishedUsers[j];
+							            user.answers.sort((a, b) => {
+							            	return questions.find(q => q.id === a.questionId).index - questions.find(q => q.id === b.questionId).index
+							            });
 							            if (surveys.find((survey) => survey.id === user.survey)) {
 								            const thankYou = surveys.find((survey) => survey.id === user.survey).thankYou;
 								            let filter_answers = user.answers.filter(answer => !answer.answer);
