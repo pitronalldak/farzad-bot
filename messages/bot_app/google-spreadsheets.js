@@ -122,6 +122,9 @@ function writeDataToSheets(auth, sheets, users, questions, survey) {
 	let userQuantity = 0;
 	let questionQuantity = 0;
 	for (let user of users) {
+		user.answers.sort((a, b) => {
+			return questions.find(q => q.id === a.questionId).index - questions.find(q => q.id === b.questionId).index
+		});
 		if (user.survey === survey.id) {
 			userQuantity++;
 			let juser = [];

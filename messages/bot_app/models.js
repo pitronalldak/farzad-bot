@@ -8,21 +8,21 @@ const SurveySchema = new Schema({
     id: { type: String, default: '' },
     name: { type : String, default : '' },
     thankYou: { type : String, default : '' },
-	isActive: { type : Boolean, default : true }
+		isActive: { type : Boolean, default : true }
 });
 
 const QuestionSchema = new Schema({
     id: { type: String, default: '' },
-	index: { type: Number },
+		index: { type: Number },
     survey: { type : String, default: '' },
     question: { type : String, default : ''},
-	type: { type : String, default : '' },
+		type: { type : String, default : '' },
     answers: { type : [] },
     ownAnswer: {
         id: { type: String, default: '' },
         text: { type: String, default: '' },
     },
-	isDeleted: { type : Boolean, default : false }
+		isDeleted: { type : Boolean, default : false }
 });
 
 const UserSchema = new Schema({
@@ -30,12 +30,13 @@ const UserSchema = new Schema({
     username: { type: String, default: '' },
     telegramId: { type: String, default: '' },
     chatId: { type: String, default: '' },
-	survey: { type: String, default: '' },
+		survey: { type: String, default: '' },
     answers: [{
         answerId: { type: String, default: '' },
         question: { type: String, default: '' },
         questionId: { type: String, default: '' },
         answer: { type: String, default: '' },
+	    isDeleted: { type : Boolean, default : false }
     }]
 });
 
